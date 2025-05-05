@@ -1,0 +1,110 @@
+MEMBER
+MID            FirstName      LastName        PhoneNumber    EmailAddress        DateOfBirth           EmergencyContact
+              1Liam           Dubois               5204358434liamdubois@aol.com  3/20/2000                 54083727857
+              2Emma           Bernard              5307597383emmaber@aol.com     4/20/1999                  6356209396
+              3Matthew        Simon                5405773843matsim@yahoo.com    2/10/1987                  5819076237
+              4Dylan          Dumont               5555974492dyldum2@gmail.com   7/11/1986                  6118358104
+              5Samantha       Morin                5604736835sammor43@hotmail.com12/12/2001                 5159452988
+
+SKIPASS
+PID            TotalUses     RemainingUses PurchaseDateTime ExpirationDate            Price         PassType          MID    IsValid
+              1          100           1002025-05-01-14:37 2025-05-03-14:37                      100OneDay                  1          1
+              2          500           5002025-05-01-12:00 2025-11-01-12:00                      500Season                  2          1
+              3          200           2002025-05-03-10:00 2025-05-05-10:00                      200TwoDay                  3          1
+              4          500           5002025-05-01-10:00 2025-11-01-10:00                      500Season                  4          1
+              5          500           5002025-05-01-13:00 2025-11-01-13:00                      500Season                  5          1
+
+EQUIPMENTRENTAL
+RID            MID            PID             EID                 RentalDateTime      Status
+              1              1               1                   12025-05-01-14:37                   0
+              2              2               2                   22025-05-01-12:00                   0
+              3              3               3                   32025-05-03-10:00                   0
+              4              4               4                   42025-05-01-10:00                   0
+              5              5               5                   52025-05-01-13:00                   0
+
+EQUIPMENT
+EID            Type           Status          SizeOrLength     IsArchived             ChangeID
+              1              1               0               5                       1               1
+              2              1               0              10                       1               2
+              3              4               0             115                       1               3
+              4              3               0             170                       1               4
+              5              2               0             120                       1               5
+
+CHANGELOG
+ChangeID       Description
+              1              1
+              2              1
+              3              1
+              4              1
+              5              1
+
+TRAIL
+TID            Name           StartLocation EndLocation     Status                    Difficulty       Category
+              1Monarch        TopOfElbert    BottomOfElbert                          0Beginner         Groomed
+              2ChinaBowl      MiddleOfElbert BottomOfElbert                          1Expert           Park
+              3Northwoods     TopOfBaldy     BottomOfBaldy                           1Intermediate     Mogul
+              4Ramshom        TopOfRamshomMiddleOfRamshom                            0Expert           Glade
+              5Snowman        TopOfSnow      BottomOfSnow                            1Beginner         Mogul
+
+LIFTTRAIL
+TID            LiftID
+              1              1
+              2              1
+              3              2
+              3              3
+              4              4
+              5              5
+
+LIFT
+LiftID         Name         OpenTime          CloseTime           Status
+              1Somewhere 9:00                 16:00                                  0
+              2Paradise     9:00              16:00                                  1
+              3ParadiseLost 9:00              14:00                                  1
+              4Oops         9:00              16:00                                  0
+              5RudolphsRide9:00               16:00                                  1
+
+LIFTUSAGE
+UID            PID            LiftID          DateTimeofUse
+              1              1               12025-05-01-14:37
+              2              1               52025-05-01-12:37
+              3              3               52025-05-01-14:28
+              4              4               42025-05-02-09:03
+              5              5               52025-05-05-10:10
+
+LESSON
+LID            Type           Difficulty      TimeOfClass         Duration            Price            IID
+              1Private        Beginner        9:30                1Hour                           50                 1
+              2Group          Beginner        10:00               1Hour                           20                 2
+              3Group          Intermediate    12:00               1Hour                           50                 3
+              4Private        Expert          9:00                2Hour                          200                 3
+              5Private        Beginner        12:00               1Hour                           50                 1
+
+LESSONORDER
+OID           MID         LID              NumberOfSessionsSessionsLeft       PurchaseDate
+             1           1                1               2                  25/3/2025
+             2           2                3              30                 305/1/2025
+             3           3                5               4                 405/1/2025
+
+INSTRUCTOR
+IID           EID         Certification
+             1           1                1
+             2           2                3
+             3           5                2
+
+EMPLOYEE
+EID           PID            FirstName     LastName            Position       Education      Gender     Age        StartDateMonthlySalary
+             1Zoe            Kravitz       Instructor          Bachelors      F                       363/20/2024       3000
+             2Hedi           Laurent       Instructor          Bachelors      M                       564/20/2020       4000
+             3Brandon        Leroy         Officer             GED            M                       301/1/2022        3000
+             4Alex           Fortin        Associate           HighSchool     F                       2011/11/2024      2000
+             5Cole           Jay           Instructor          GED            M                       2612/10/2023      3500
+             6Auguste        Gusteau       Chef                PHD            M                       505/1/2015        3500
+
+PROPERTY
+PropertyID    Type           Name          MonthlyIncome
+             1Lodge          FoxInn                   150000
+             2Shop           LivingRainbow             20000
+             3RentalCenter   RentOCenter               40000
+             4Restaurant     GusteausGem               30000
+             5Office         Sade                     100000
+
