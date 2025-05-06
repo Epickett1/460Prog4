@@ -47,6 +47,7 @@ import java.util.Scanner;
                      case "9": liftMenu();      break;
                      case "10": liftUsageMenu();break;
                      case "11": queryMenu();    break;
+                     case "12": propertyMenu(); break;
                      case "0": exit = true;     break;
                      default: System.out.println("Invalid option");
                  }
@@ -60,17 +61,18 @@ import java.util.Scanner;
  
      private void printMainMenu() {
          System.out.println("\n=== CSc 460 Ski Resort CLI ===");
-         System.out.println("1) Member CRUD");
-         System.out.println("2) SkiPass CRUD");
-         System.out.println("3) Equipment CRUD");
-         System.out.println("4) Rental CRUD");
-         System.out.println("5) Lesson Purchase CRUD");
-         System.out.println("6) Instructor CRUD");
-         System.out.println("7) Employee CRUD");
-         System.out.println("8) Trail CRUD");
-         System.out.println("9) Lift CRUD");
-         System.out.println("10) Lift Usage CRUD");
+         System.out.println("1) Member ");
+         System.out.println("2) SkiPass ");
+         System.out.println("3) Equipment ");
+         System.out.println("4) Rental ");
+         System.out.println("5) Lesson Purchase ");
+         System.out.println("6) Instructor ");
+         System.out.println("7) Employee ");
+         System.out.println("8) Trail ");
+         System.out.println("9) Lift ");
+         System.out.println("10) Lift Usage ");
          System.out.println("11) Queries");
+         System.out.println("12) Property ");
          System.out.println("0) Exit");
          System.out.print("> ");
      }
@@ -641,7 +643,7 @@ import java.util.Scanner;
     }    
     private void lessonMenu() {
         while (true) {
-            System.out.println("-- Lesson Purchase CRUD -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
+            System.out.println("-- Lesson Purchase  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
             System.out.print("> ");
             String c = scanner.nextLine().trim();
             try {
@@ -735,7 +737,7 @@ import java.util.Scanner;
     
     private void instructorMenu() {
     while (true) {
-        System.out.println("-- Instructor CRUD -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
+        System.out.println("-- Instructor  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
         System.out.print("> ");
         String c = scanner.nextLine().trim();
         try {
@@ -824,7 +826,7 @@ import java.util.Scanner;
 
     private void employeeMenu() {
         while (true) {
-            System.out.println("-- Employee CRUD -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
+            System.out.println("-- Employee  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
             System.out.print("> ");
             String c = scanner.nextLine().trim();
             try {
@@ -941,7 +943,7 @@ import java.util.Scanner;
 
     private void trailMenu() {
     while (true) {
-        System.out.println("-- Trail CRUD -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
+        System.out.println("-- Trail  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
         System.out.print("> ");
         String c = scanner.nextLine().trim();
         try {
@@ -1163,7 +1165,7 @@ import java.util.Scanner;
     
     private void liftUsageMenu() {
         while (true) {
-            System.out.println("-- Lift Usage CRUD -- 1)Add 2)List 0)Back");
+            System.out.println("-- Lift Usage  -- 1)Add 2)List 0)Back");
             System.out.print("> ");
             String c = scanner.nextLine().trim();
             try {
@@ -1285,6 +1287,108 @@ import java.util.Scanner;
             }
         }
     }
+    private void propertyMenu() {
+        while (true) {
+            System.out.println("-- Property  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
+            System.out.print("> ");
+            String c = scanner.nextLine().trim();
+            try {
+                switch (c) {
+                case "1": {  // Add
+                    System.out.print("Property ID: ");    int pid   = Integer.parseInt(scanner.nextLine());
+                    System.out.print("Type: ");           String ty  = scanner.nextLine();
+                    System.out.print("Name: ");           String nm  = scanner.nextLine();
+                    System.out.print("Monthly Income: "); BigDecimal inc = new BigDecimal(scanner.nextLine());
+    
+                    String sql = """
+                        INSERT INTO Property
+                          (PropertyID, Type, Name, MonthlyIncome)
+                        VALUES (?,?,?,?)
+                        """;
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, pid);
+                        ps.setString(2, ty);
+                        ps.setString(3, nm);
+                        ps.setBigDecimal(4, inc);
+                        ps.executeUpdate();
+                    }
+                    System.out.println("Property added.");
+                } break;
+    
+                case "2": {  // List all
+                    String sql = "SELECT PropertyID, Type, Name, MonthlyIncome FROM Property";
+                    try (Statement st = conn.createStatement();
+                         ResultSet rs = st.executeQuery(sql)) {
+                        System.out.println("PID | Type | Name | Income");
+                        while (rs.next()) {
+                            System.out.printf("%d | %s | %s | %s%n",
+                              rs.getInt("PropertyID"),
+                              rs.getString("Type"),
+                              rs.getString("Name"),
+                              rs.getBigDecimal("MonthlyIncome"));
+                        }
+                    }
+                } break;
+    
+                case "3": {  // Update income
+                    System.out.print("Property ID to update: ");
+                    int pid = Integer.parseInt(scanner.nextLine());
+                    System.out.print("New Monthly Income: ");
+                    BigDecimal inc = new BigDecimal(scanner.nextLine());
+    
+                    String sql = "UPDATE Property SET MonthlyIncome = ? WHERE PropertyID = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setBigDecimal(1, inc);
+                        ps.setInt(2, pid);
+                        int cnt = ps.executeUpdate();
+                        System.out.println(cnt>0 ? "Property updated." : "No such PropertyID.");
+                    }
+                } break;
+    
+                case "4": {  // Delete
+                    System.out.print("Property ID to delete: ");
+                    int pid = Integer.parseInt(scanner.nextLine());
+                    String sql = "DELETE FROM Property WHERE PropertyID = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, pid);
+                        int cnt = ps.executeUpdate();
+                        System.out.println(cnt>0 ? "Property deleted." : "No such PropertyID.");
+                    }
+                } break;
+    
+                case "5": {  // By ID
+                    System.out.print("Property ID: ");
+                    int pid = Integer.parseInt(scanner.nextLine());
+                    String sql = "SELECT * FROM Property WHERE PropertyID = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, pid);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                System.out.printf(
+                                  "%d | %s | %s | %s%n",
+                                  rs.getInt("PropertyID"),
+                                  rs.getString("Type"),
+                                  rs.getString("Name"),
+                                  rs.getBigDecimal("MonthlyIncome")
+                                );
+                            } else {
+                                System.out.println("No property found.");
+                            }
+                        }
+                    }
+                } break;
+    
+                case "0":
+                    return;
+    
+                default:
+                    System.out.println("Invalid choice.");
+                }
+            } catch (SQLException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }    
 }
 
 
