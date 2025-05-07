@@ -1,0 +1,11 @@
+3. List all open trails suitable for intermediate-level skiers, along 
+with their category and connected lifts that are currently operational.
+
+
+
+SELECT Trail.name, category, Lift.name FROM pruiz2.Trail 
+JOIN pruiz2.LiftTrail ON Trail.TID = LiftTrail.TID
+JOIN pruiz2.Lift ON Lift.LiftID = LiftTrail.LiftID
+WHERE Difficulty = 'Intermediate' 
+AND Trail.status = 1
+AND Lift.status = 1;

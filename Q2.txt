@@ -1,0 +1,13 @@
+2. For a given ski pass, list all lift rides and equipment 
+rentals associated with it, along with timestamps and return status.
+
+
+SELECT name, dateTimeofUse FROM pruiz2.Lift 
+JOIN pruiz2.LiftUsage ON Lift.LiftID = LiftUsage.LiftID
+JOIN pruiz2.SkiPass ON LiftUsage.PID = SkiPass.PID
+WHERE SkiPass.PID = '%s';
+
+SELECT type, er.status, rentalDateTime FROM pruiz2.EquipmentRental er
+JOIN pruiz2.Equipment ON er.EID = Equipment.EID
+JOIN pruiz2.SkiPass ON er.PID = SkiPass.PID
+WHERE SkiPass.PID = '%s';

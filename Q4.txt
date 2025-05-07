@@ -1,0 +1,6 @@
+4. For a given Lesson (LessonID) display the instructors certification level
+
+
+SELECT certification FROM pruiz2.Instructor 
+JOIN pruiz2.Lesson ON Instructor.IID = Lesson.IID
+WHERE LID = '%s';

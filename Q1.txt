@@ -1,0 +1,9 @@
+1. For a given member, list all the ski lessons they have purchased, 
+including the number of remaining sessions, instructor name, and scheduled time.
+
+
+SELECT NumberOfSessions, SessionsLeft, Name, TimeOfClass FROM pruiz2.LessonOrder 
+JOIN pruiz2.Lesson ON LessonOrder.LID = Lesson.LID
+JOIN pruiz2.Instructor ON Lesson.IID = Instructor.IID
+JOIN pruiz2.Member ON LessonOrder.MID = Member.MID
+WHERE Member.MID = '%s';
