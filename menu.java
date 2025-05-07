@@ -1217,76 +1217,141 @@ import java.util.Scanner;
             System.out.println("1) Member lessons");
             System.out.println("2) Pass history");
             System.out.println("3) Open intermediate trails + lifts");
-            System.out.println("4) Custom: instructor lessons & members");
+            System.out.println("4) Lesson instructor cert");
             System.out.println("0) Back");
             System.out.print("> ");
             String q = scanner.nextLine().trim();
             try {
                 switch (q) {
                 case "1": {
-                    System.out.print("Member ID: "); int mid = Integer.parseInt(scanner.nextLine());
-                    String sql ="";
+                    System.out.print("Member ID: ");
+                    int mid = Integer.parseInt(scanner.nextLine());
+                    String sql = """
+                        SELECT m.FirstName, m.LastName,
+                               lo.NumberOfSessions, lo.SessionsLeft,
+                               e.FirstName, e.LastName,
+                               l.TimeOfClass
+                          FROM LessonOrder lo
+                          JOIN Lesson l        ON lo.LID = l.LID
+                          JOIN Instructor i    ON l.IID = i.IID
+                          JOIN Employee e      ON i.EID = e.EID
+                          JOIN Member m        ON lo.MID = m.MID
+                         WHERE m.MID = ?
+                        """;
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, mid);
                         try (ResultSet rs = ps.executeQuery()) {
-                            System.out.println("LID | Left | Cert | Time");
+                            System.out.println("MemFirst | MemLast | #Purchased | #Left | InstrFirst | InstrLast | TimeOfClass");
                             while (rs.next()) {
-                                System.out.printf("%d | %d | %s | %s%n",
-                                    rs.getInt(1), rs.getInt(2), rs.getString(3), rs.getTimestamp(4));
+                                System.out.printf("%s | %s | %d | %d | %s | %s | %s%n",
+                                    rs.getString(1),
+                                    rs.getString(2),
+                                    rs.getInt(3),
+                                    rs.getInt(4),
+                                    rs.getString(5),
+                                    rs.getString(6),
+                                    rs.getTimestamp(7));
                             }
                         }
                     }
-                    break;
-                }
+                } break;
+    
                 case "2": {
-                    System.out.print("Pass ID: "); int pid = Integer.parseInt(scanner.nextLine());
-                    String sql ="";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setInt(1, pid); ps.setInt(2, pid);
+                    System.out.print("Pass ID: ");
+                    int pid = Integer.parseInt(scanner.nextLine());
+                    // lift rides
+                    System.out.println("=== Lift Rides ===");
+                    String sql1 = """
+                        SELECT lf.Name, lu.DateTimeOfUse
+                          FROM LiftUsage lu
+                          JOIN Lift lf ON lu.LiftID = lf.LiftID
+                         WHERE lu.PID = ?
+                        """;
+                    try (PreparedStatement ps = conn.prepareStatement(sql1)) {
+                        ps.setInt(1, pid);
                         try (ResultSet rs = ps.executeQuery()) {
-                            System.out.println("Type | ID | Time");
+                            System.out.println("LiftName | DateTimeOfUse");
+                            while (rs.next()) {
+                                System.out.printf("%s | %s%n",
+                                    rs.getString(1), rs.getTimestamp(2));
+                            }
+                        }
+                    }
+                    // equipment rentals
+                    System.out.println("=== Equipment Rentals ===");
+                    String sql2 = """
+                        SELECT eq.Type, er.Status, er.RentalDateTime
+                          FROM EquipmentRental er
+                          JOIN Equipment eq ON er.EID = eq.EID
+                         WHERE er.PID = ?
+                        """;
+                    try (PreparedStatement ps = conn.prepareStatement(sql2)) {
+                        ps.setInt(1, pid);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            System.out.println("EquipmentType | Status | RentalDateTime");
                             while (rs.next()) {
                                 System.out.printf("%s | %d | %s%n",
                                     rs.getString(1), rs.getInt(2), rs.getTimestamp(3));
                             }
                         }
                     }
-                    break;
-                }
+                } break;
+    
                 case "3": {
-                    String sql ="";
-                    try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
-                        System.out.println("TID | Trail | Cat | LiftID | LiftName");
+                    String sql = """
+                        SELECT t.Name, t.Category, lf.Name
+                          FROM Trail t
+                          JOIN LiftTrail lt ON t.TID = lt.TID
+                          JOIN Lift lf      ON lt.LiftID = lf.LiftID
+                         WHERE t.Difficulty = 'Intermediate'
+                           AND t.Status = 1
+                           AND lf.Status = 1
+                        """;
+                    try (Statement st = conn.createStatement();
+                         ResultSet rs = st.executeQuery(sql)) {
+                        System.out.println("TrailName | Category | LiftName");
                         while (rs.next()) {
-                            System.out.printf("%d | %s | %s | %d | %s%n",
-                                rs.getInt(1), rs.getString(2), rs.getString(3), rs.getInt(4), rs.getString(5));
+                            System.out.printf("%s | %s | %s%n",
+                                rs.getString(1),
+                                rs.getString(2),
+                                rs.getString(3));
                         }
                     }
-                    break;
-                }
+                } break;
+    
                 case "4": {
-                    System.out.print("Instructor ID: "); int iid = Integer.parseInt(scanner.nextLine());
-                    String sql ="";
+                    System.out.print("Lesson ID: ");
+                    int lid = Integer.parseInt(scanner.nextLine());
+                    String sql = """
+                        SELECT i.Certification
+                          FROM Instructor i
+                          JOIN Lesson l ON i.IID = l.IID
+                         WHERE l.LID = ?
+                        """;
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setInt(1, iid);
+                        ps.setInt(1, lid);
                         try (ResultSet rs = ps.executeQuery()) {
-                            System.out.println("LID | Type | Member | Left");
-                            while (rs.next()) {
-                                System.out.printf("%d | %s | %s | %d%n",
-                                    rs.getInt(1), rs.getString(2), rs.getString(3), rs.getInt(4));
+                            System.out.println("Certification");
+                            if (rs.next()) {
+                                System.out.println(rs.getString(1));
+                            } else {
+                                System.out.println("No such lesson.");
                             }
                         }
                     }
-                    break;
-                }
-                case "0": return;
-                default: System.out.println("Invalid query option");
+                } break;
+    
+                case "0":
+                    return;
+    
+                default:
+                    System.out.println("Invalid query option");
                 }
             } catch (SQLException e) {
                 System.out.println("Error: " + e.getMessage());
             }
         }
-    }
+    }    
     private void propertyMenu() {
         while (true) {
             System.out.println("-- Property  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -1390,5 +1455,3 @@ import java.util.Scanner;
         }
     }    
 }
-
-
