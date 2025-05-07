@@ -25,8 +25,6 @@ VALUES (4, 'Dylan', 'Dumont', '5555974492', 'dyldum2@gmail.com', TO_DATE('1986-0
 INSERT INTO Member (MID, FirstName, LastName, PhoneNumber, EmailAddress, DateOfBirth, EmergencyContact)
 VALUES (5, 'Samantha', 'Morin', '5604736835', 'sammor43@hotmail.com', TO_DATE('2001-12-12', 'YYYY-MM-DD'), '5159452988');
 
--- (continued in next step due to size)
-
 -- Employee
 INSERT INTO Employee (EID, PID, FirstName, LastName, Position, Education, Gender, Age, StartDate, MonthlySalary)
 VALUES (1, 1, 'Zoe', 'Kravitz', 'Instructor', 'Bachelors', 'F', 36, TO_DATE('2024-03-20', 'YYYY-MM-DD'), 3000);
@@ -60,15 +58,16 @@ VALUES (5, 500, 500, TO_TIMESTAMP('2025-05-01 13:00:00', 'YYYY-MM-DD HH24:MI:SS'
 
 -- Trail
 INSERT INTO Trail (TID, Name, StartLocation, EndLocation, Status, Difficulty, Category)
-VALUES (1, 'Eagle Path', 'Base', 'Peak', 1, 'Intermediate', 'Alpine');
+VALUES (1, 'Monarch', 'TopOfElbert', 'BottomOfElbert', 0, 'Beginner', 'Groomed');
 INSERT INTO Trail (TID, Name, StartLocation, EndLocation, Status, Difficulty, Category)
-VALUES (2, 'Bunny Slope', 'Lodge', 'Meadow', 1, 'Easy', 'Beginner');
+VALUES (2, 'ChinaBowl', 'MiddleOfElbert', 'BottomOfElbert', 1, 'Expert', 'Park');
 INSERT INTO Trail (TID, Name, StartLocation, EndLocation, Status, Difficulty, Category)
-VALUES (3, 'Black Ice', 'Cliffside', 'Bottom', 1, 'Hard', 'Expert');
+VALUES (3, 'Northwoods', 'TopOfBaldy', 'BottomOfBaldy', 1, 'Intermediate', 'Mogul');
 INSERT INTO Trail (TID, Name, StartLocation, EndLocation, Status, Difficulty, Category)
-VALUES (4, 'Glacier Run', 'Ridge', 'Lift 3', 1, 'Advanced', 'Backcountry');
+VALUES (4, 'Ramshom', 'TopOfRamshom', 'MiddleOfRamshom', 0, 'Expert', 'Glade');
 INSERT INTO Trail (TID, Name, StartLocation, EndLocation, Status, Difficulty, Category)
-VALUES (5, 'Sunset Trail', 'Top Cabin', 'Lodge', 1, 'Medium', 'Family');
+VALUES (5, 'Snowman', 'TopOfSnow', 'BottomOfSnow', 1, 'Beginner', 'Mogul');
+
 
 -- Lift
 INSERT INTO Lift (LiftID, Name, OpenTime, CloseTime, Status)
