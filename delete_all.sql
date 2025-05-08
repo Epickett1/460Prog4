@@ -1,0 +1,16 @@
+DELETE FROM LiftUsage;
+DELETE FROM EquipmentRental;
+DELETE FROM LessonOrder;
+DELETE FROM Lesson;
+DELETE FROM Instructor;
+DELETE FROM Employee;
+DELETE FROM Equipment;
+DELETE FROM SkiPass;
+DELETE FROM Member;
+DELETE FROM LiftTrail;
+DELETE FROM Lift;
+DELETE FROM Trail;
+DELETE FROM Property;
+DELETE FROM ChangeLog;
+
+COMMIT;
