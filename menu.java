@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.util.Scanner;
  
  public class menu {
-     private static final String URL  = "jdbc:oracle:thin:@aloe.cs.arizona.edu:1521:ORCL";
+     private static final String URL  = "jdbc:oracle:thin:@aloe.cs.arizona.edu:1521:oracle";
      private static final String USER = "<YOUR_USER>";
      private static final String PASS = "<YOUR_PASS>";
      private Connection conn;
