@@ -902,9 +902,9 @@ import java.util.Scanner;
     /*
      * Method instructorMenu()
      *
-     * This method opens a menu for managing lesson order records in the database.
-     * Users can add new lesson orders, view all lessons, or look up lessons by ID.
-
+     * This method opens a menu for managing instructor records in the database.
+     * Users can add, view, delete, or look up instructors by ID.
+     * 
      * Parameters:
      *      None
      * Returns:
@@ -1005,6 +1005,18 @@ import java.util.Scanner;
     }
 }
 
+    /*
+     * Method employeeMenu()
+     *
+     * This method opens a menu for managing employee records in the database.
+     * Users can add, view, delete, update, or look up employees by ID.
+     * 
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
+    
     private void employeeMenu() {
         while (true) {
             System.out.println("-- Employee  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -1127,7 +1139,17 @@ import java.util.Scanner;
         }
     }
     
-
+    /*
+     * Method trailMenu()
+     *
+     * This method opens a menu for managing trail records in the database.
+     * Users can add, view, delete, or look up trail by ID.
+     * 
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     private void trailMenu() {
     while (true) {
         System.out.println("-- Trail  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -1241,6 +1263,17 @@ import java.util.Scanner;
         }
     }
     
+    /*
+     * Method liftMenu()
+     *
+     * This method opens a menu for managing lift records in the database.
+     * Users can add, view, update, delete, or look up lift by ID.
+     * 
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     private void liftMenu() {
         while (true) {
             System.out.println("-- Lift -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -1359,6 +1392,17 @@ import java.util.Scanner;
         }
     }    
     
+    /*
+     * Method liftUsageMenu()
+     *
+     * This method opens a menu for managing lift usage records in the database.
+     * Users can add or look up lift usage by ID.
+     * 
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     private void liftUsageMenu() {
         while (true) {
             System.out.println("-- Lift Usage  -- 1)Add 2)List 0)Back");
@@ -1412,8 +1456,19 @@ import java.util.Scanner;
         }
     }    
 
+    /*
+     * Method queryMenu()
+     *
+     * This method opens a menu which prompts the user to select a query they would like to perform. The
+     * queries are based on predetermined and specific searches set by the project scope.
+     * 
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     private void queryMenu() {
-        while (true) {
+        while (true) { // Show menu
             System.out.println("--- Queries ---");
             System.out.println("1) Member lessons");
             System.out.println("2) Pass history");
@@ -1424,7 +1479,7 @@ import java.util.Scanner;
             String q = scanner.nextLine().trim();
             try {
                 switch (q) {
-                case "1": {
+                case "1": { // Query 1
                     System.out.print("Member ID: ");
                     int mid = Integer.parseInt(scanner.nextLine());
                     String sql = """
@@ -1457,7 +1512,7 @@ import java.util.Scanner;
                     }
                 } break;
     
-                case "2": {
+                case "2": { // Query 2
                     System.out.print("Pass ID: ");
                     int pid = Integer.parseInt(scanner.nextLine());
                     // lift rides
@@ -1498,8 +1553,7 @@ import java.util.Scanner;
                     }
                 } break;
 
-                // CHECK HERE
-                case "3": {
+                case "3": { // Query 3
                     String sql = """
                         SELECT t.Name, t.Category, lf.Name
                           FROM pruiz2.Trail t
@@ -1521,7 +1575,7 @@ import java.util.Scanner;
                     }
                 } break;
     
-                case "4": {
+                case "4": { // Query 4
                     System.out.print("Lesson ID: ");
                     int lid = Integer.parseInt(scanner.nextLine());
                     String sql = """
@@ -1554,6 +1608,18 @@ import java.util.Scanner;
             }
         }
     }    
+
+    /*
+     * Method propertyMenu()
+     *
+     * This method opens a menu for managing property records in the database.
+     * Users can add, view, update, delete, or look up property by ID.
+     * 
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     private void propertyMenu() {
         while (true) {
             System.out.println("-- Property  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -1661,6 +1727,18 @@ import java.util.Scanner;
             }
         }
     }    
+
+    /*
+     * Method lessonMenu()
+     *
+     * This method opens a menu for managing lesson records in the database.
+     * Users can add, view, update, delete, or look up lesson by ID.
+     * 
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     private void lessonMenu() {
         while (true) {
             System.out.println("-- Lesson -- 1)Add  2)List  3)Upd  4)Del  5)ByID  0)Back");
