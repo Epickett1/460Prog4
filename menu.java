@@ -2,33 +2,72 @@
  * Author: Group 12
  * Course: CSC 460
  * Assignment: Prog4
- * Instructor: Prof McCann
- * TA's: Xinyu (Joyce) Gu and Jianwei (James) Shen
- * Due Date: April 30th 2025
- * Purpose: Create a Database menu for a ski resort so that they can use it
- * to manage the different aspects of the operation
- * Language: Java 16
- * Input: nothing
- * Output: change something in the DB or query something
- * Missing Features: need to include your username and password for the jdbc
+ * In
+ * This Java program implements a text-based, menu-driven command-line interface 
+ * that connects to an Oracle database via JDBC. It is designed for a ski resort
+ * to manage and interact with their operational data including members, ski passes,
+ * equipment rentals, employee records, lessons, trails, lifts, and properties.
+ *
+ * The system allows authorized users to perform insertions, deletions, updates,
+ * and complex queries on the underlying database. Each category of data is handled
+ * through dedicated sub-menus that prompt the user for relevant input and issue
+ * SQL statements to the database accordingly.
+ *
+ * Built as part of a two-tier client-server application, this front-end
+ * communicates with a relational schema stored on the university’s Oracle server.
+ * Its purpose is to enhance both customer experience and staff efficiency by
+ * providing operations such as ski pass usage tracking, rental returns,
+ * lesson scheduling, and property income monitoring.
+ *
+ *
+ *              -- Missing Features --
+ *  - need to include your username and password for the jdbc
+ *
+ *                -- To compile --
+ * export CLASSPATH=/usr/lib/oracle/19.8/client64/lib/ojdbc8.jar:${CLASSPATH}
+ * javac menu.java
+ * java menu
  */
 
- import java.math.BigDecimal;
- import java.sql.*;
+// Imports
+import java.math.BigDecimal;
+import java.sql.*;
 import java.time.Instant;
 import java.util.Scanner;
  
  public class menu {
-     private static final String URL  = "jdbc:oracle:thin:@aloe.cs.arizona.edu:1521:ORCL";
-     private static final String USER = "<YOUR_USER>";
-     private static final String PASS = "<YOUR_PASS>";
+
+     // Global variables
+     private static final String URL  = "jdbc:oracle:thin:@aloe.cs.arizona.edu:1521:oracle"; // URL to oracle database
+     private static final String USER = "<YOUR_USER>";                                       // User's Oracle username
+     private static final String PASS = "<YOUR_PASS>";                                       // User's Oracle password
+     
+  
      private Connection conn;
      private Scanner scanner = new Scanner(System.in);
  
+     // Main
      public static void main(String[] args) {
          new menu().run();
      }
- 
+     
+    /*
+     * Method run()
+     *
+     * This method serves as the main control loop for the ski resort's database management CLI.
+     * It establishes a JDBC connection to the Oracle database and repeatedly presents the user
+     * with a menu of available operations until the user chooses to exit.
+     * Based on user input, it dispatches control to the appropriate submenu method.
+     *
+     * The method handles database connection setup and teardown, as well as basic input validation
+     * to ensure valid option selection.
+     *
+     * Parameters:
+     *      None
+     *
+     * Returns:
+     *      void -- This method does not return a value. It manages program control flow and DB session.
+     */
      public void run() {
          try {
              conn = DriverManager.getConnection(URL, USER, PASS);
@@ -60,7 +99,8 @@ import java.util.Scanner;
              try { if (conn != null) conn.close(); } catch (SQLException ignored) {}
          }
      }
- 
+     
+     // Display the user menu
      private void printMainMenu() {
          System.out.println("\n=== CSc 460 Ski Resort CLI ===");
          System.out.println("1) Member ");
@@ -79,7 +119,21 @@ import java.util.Scanner;
          System.out.println("0) Exit");
          System.out.print("> ");
      }
- 
+     
+    /*
+     * Method memberMenu()
+     *
+     * This method provides a submenu for managing resort members within the database system.
+     * It allows users to perform CRUD operations (Create, Read, Update, Delete) and retrieve member
+     * details by ID. Each option corresponds to a specific SQL interaction and is executed
+     * based on user input through the command-line interface.
+     *
+     * Parameters:
+     *      None
+     *
+     * Returns:
+     *      void -- This method does not return a value. It handles database modifications and output display.
+     */
     private void memberMenu() {
         while (true) {
             System.out.println("-- Member -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -310,6 +364,20 @@ import java.util.Scanner;
         }
     }
 
+    /*
+     * Method skiPassMenu()
+     *
+     * This method shows a submenu that lets the user manage ski passes in the system.
+     * Users can add new ski passes, view all passes, update the remaining uses on a pass,
+     * delete expired and used-up passes, or look up a pass by its ID.
+     *
+
+     * Parameters:
+     *      None
+     *
+     * Returns:
+     *      void -- Does not return anything. It handles user input and updates the database.
+     */
     private void skiPassMenu() {
         while (true) {
             System.out.println("-- SkiPass -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -462,7 +530,19 @@ import java.util.Scanner;
         }
     }
     
- 
+    /*
+     * Method equipmentMenu()
+     *
+     * This method opens a menu for managing ski equipment records in the database.
+     * Users can add new equipment, view all records, update equipment status,
+     * delete equipment, or look up equipment by ID.
+
+     * Parameters:
+     *      None
+     *
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     private void equipmentMenu() {
         while (true) {
             System.out.println("-- Equipment -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -581,7 +661,19 @@ import java.util.Scanner;
             }
         }
     }    
- 
+    
+    /*
+     * Method rentalMenu()
+     *
+     * This method opens a menu for managing rental records in the database.
+     * Users can add new rentals, view all rentals, update rental status,
+     * delete rentals, or look up rentals by ID.
+
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     private void rentalMenu() {
         while (true) {
             System.out.println("-- Equipment Rental -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -695,6 +787,18 @@ import java.util.Scanner;
             }
         }
     }    
+
+    /*
+     * Method lessonOrderMenu()
+     *
+     * This method opens a menu for managing lesson order records in the database.
+     * Users can add new lesson orders, view all lessons, or look up lessons by ID.
+
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     private void lessonOrderMenu() {
         while (true) {
             System.out.println("-- Lesson Purchase  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -794,6 +898,18 @@ import java.util.Scanner;
             }
         }
     }
+
+    /*
+     * Method instructorMenu()
+     *
+     * This method opens a menu for managing lesson order records in the database.
+     * Users can add new lesson orders, view all lessons, or look up lessons by ID.
+
+     * Parameters:
+     *      None
+     * Returns:
+     *      void -- Doesn’t return anything. It handles user actions and updates the database.
+     */
     
     private void instructorMenu() {
     while (true) {
