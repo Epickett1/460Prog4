@@ -11,6 +11,10 @@
  * Input: nothing
  * Output: change something in the DB or query something
  * Missing Features: need to include your username and password for the jdbc
+ * To compile:
+ * export CLASSPATH=/usr/lib/oracle/19.8/client64/lib/ojdbc8.jar:${CLASSPATH}
+ * javac menu.java
+ * java menu
  */
 
  import java.math.BigDecimal;
