@@ -142,6 +142,7 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": { // Create
+                    System.out.print("MID: ");
                     int mid;
                     try (Statement s = conn.createStatement();
                     ResultSet r = s.executeQuery("SELECT member_seq.NEXTVAL FROM DUAL")) {
@@ -162,7 +163,7 @@ import java.util.Scanner;
                     String ec = scanner.nextLine();
 
                     String sql = """
-                        INSERT INTO Member
+                        INSERT INTO pruiz2.Member
                         (MID, FirstName, LastName,
                         PhoneNumber, EmailAddress,
                         DateOfBirth, EmergencyContact)
@@ -186,7 +187,8 @@ import java.util.Scanner;
                         SELECT MID, FirstName, LastName,
                             PhoneNumber, EmailAddress,
                             DateOfBirth, EmergencyContact
-                        FROM Member
+                        FROM pruiz2.Member
+                        ORDER BY MID ASC
                         """;
                     try (Statement st = conn.createStatement();
                         ResultSet rs = st.executeQuery(sql)) {
@@ -221,7 +223,7 @@ import java.util.Scanner;
                     String ec = scanner.nextLine();
 
                     String sql = """
-                        UPDATE Member
+                        UPDATE pruiz2.Member
                         SET FirstName=?, LastName=?,
                             PhoneNumber=?, EmailAddress=?,
                             DateOfBirth=?, EmergencyContact=?
@@ -240,13 +242,13 @@ import java.util.Scanner;
                     }
                 } break;
 
-                case "4": { // Delete with pre‐checks + cascade deletes
+                case "4": { // Delete with pre‐checks
                     System.out.print("MID to delete: ");
                     int mid = Integer.parseInt(scanner.nextLine());
-                
-                    // check for active passes
+
+                    // Check for active passes
                     String passCheck =
-                      "SELECT COUNT(*) FROM SkiPass " +
+                   "SELECT COUNT(*) FROM pruiz2.SkiPass " +
                       "WHERE MID = ? AND (RemainingUses > 0 OR ExpirationDate > SYSTIMESTAMP)";
                     try (PreparedStatement ps = conn.prepareStatement(passCheck)) {
                         ps.setInt(1, mid);
@@ -258,10 +260,10 @@ import java.util.Scanner;
                             }
                         }
                     }
-                
-                    // check for rentals
+
+                    // Check for Rentals
                     String rentCheck =
-                      "SELECT COUNT(*) FROM EquipmentRental WHERE MID = ? AND Status = 0";
+                    "SELECT COUNT(*) FROM pruiz2.EquipmentRental WHERE MID = ? AND Status = 0";
                     try (PreparedStatement ps = conn.prepareStatement(rentCheck)) {
                         ps.setInt(1, mid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -272,10 +274,10 @@ import java.util.Scanner;
                             }
                         }
                     }
-                
-                    // check for unused lessons
+
+                    // Check for unused lessons
                     String lessonCheck =
-                      "SELECT COUNT(*) FROM LessonOrder WHERE MID = ? AND SessionsLeft > 0";
+                     "SELECT COUNT(*) FROM pruiz2.LessonOrder WHERE MID = ? AND SessionsLeft > 0";
                     try (PreparedStatement ps = conn.prepareStatement(lessonCheck)) {
                         ps.setInt(1, mid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -286,7 +288,7 @@ import java.util.Scanner;
                             }
                         }
                     }
-                
+
                     // Lift usage 
                     String delLiftUsage =
                       "DELETE FROM LiftUsage WHERE PID IN (SELECT PID FROM SkiPass WHERE MID = ?)";
@@ -325,12 +327,12 @@ import java.util.Scanner;
                             ? "Member and all related data deleted."
                             : "No such MID.");
                     }
-                } break;                
+                } break;
 
                 case "5": { // By ID
                     System.out.print("MID: ");
                     int mid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * FROM Member WHERE MID = ?";
+                    String sql = "SELECT * FROM pruiz2.Member WHERE MID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, mid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -392,7 +394,6 @@ import java.util.Scanner;
                         r.next();
                         pid = r.getInt(1);
                     }
-
                     System.out.print("Total Uses: ");int total = Integer.parseInt(scanner.nextLine());
                     System.out.print("Remaining Uses: "); int rem = Integer.parseInt(scanner.nextLine());
                     System.out.print("Purchase Time (yyyy-MM-dd HH:mm:ss): ");
@@ -406,7 +407,7 @@ import java.util.Scanner;
                     int valid = Integer.parseInt(scanner.nextLine());
     
                     String sql = """
-                        INSERT INTO SkiPass
+                        INSERT INTO pruiz2.SkiPass
                           (PID, TotalUses, RemainingUses,
                            PurchaseDateTime, ExpirationDate,
                            Price, PassType, MID, IsValid)
@@ -432,7 +433,7 @@ import java.util.Scanner;
                         SELECT PID, MID, PassType,
                                PurchaseDateTime, ExpirationDate,
                                TotalUses, RemainingUses, Price, IsValid
-                          FROM SkiPass
+                          FROM pruiz2.SkiPass
                         """;
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
@@ -457,7 +458,7 @@ import java.util.Scanner;
                 case "3": { // Update remaining uses
                     System.out.print("PID to update: "); int pid = Integer.parseInt(scanner.nextLine());
                     System.out.print("New Remaining Uses: "); int rem = Integer.parseInt(scanner.nextLine());
-                    String sql = "UPDATE SkiPass SET RemainingUses=? WHERE PID=?";
+                    String sql = "UPDATE pruiz2.SkiPass SET RemainingUses=? WHERE PID=?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, rem);
                         ps.setInt(2, pid);
@@ -470,7 +471,7 @@ import java.util.Scanner;
                     System.out.print("PID to delete: ");
                     int pid = Integer.parseInt(scanner.nextLine());
                     String check = 
-                    "SELECT RemainingUses, ExpirationDate FROM SkiPass WHERE PID = ?";
+                    "SELECT RemainingUses, ExpirationDate FROM pruiz2.SkiPass WHERE PID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(check)) {
                         ps.setInt(1, pid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -481,7 +482,7 @@ import java.util.Scanner;
                                 Timestamp exp = rs.getTimestamp("ExpirationDate");
                                 if (rem == 0 && exp.before(Timestamp.from(Instant.now()))) {
                                     // safe to delete
-                                    try (PreparedStatement del = conn.prepareStatement("DELETE FROM SkiPass WHERE PID = ?")) {
+                                    try (PreparedStatement del = conn.prepareStatement("DELETE FROM pruiz2.SkiPass WHERE PID = ?")) {
                                     del.setInt(1, pid);
                                     del.executeUpdate();
                                     System.out.println("SkiPass deleted.");
@@ -495,7 +496,7 @@ import java.util.Scanner;
                 } break;
                 case "5": { // By ID
                     System.out.print("PID: "); int pid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * FROM SkiPass WHERE PID=?";
+                    String sql = "SELECT * FROM pruiz2.SkiPass WHERE PID=?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, pid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -551,7 +552,7 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": { // Add
-                    int eid;
+                     int eid;
                     try (Statement s = conn.createStatement();
                         ResultSet r = s.executeQuery("SELECT equipment_seq.NEXTVAL FROM DUAL")) {
                         r.next();
@@ -564,7 +565,7 @@ import java.util.Scanner;
                     System.out.print("ChangeID: ");              int cid      = Integer.parseInt(scanner.nextLine());
     
                     String sql = """
-                        INSERT INTO Equipment
+                        INSERT INTO pruiz2.Equipment
                           (EID, Type, Status, SizeOrLength, IsArchived, ChangeID)
                         VALUES (?,?,?,?,?,?)
                         """;
@@ -584,7 +585,7 @@ import java.util.Scanner;
                     String sql = """
                         SELECT EID, Type, Status,
                                SizeOrLength, IsArchived, ChangeID
-                          FROM Equipment
+                          FROM pruiz2.Equipment
                         """;
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
@@ -608,7 +609,7 @@ import java.util.Scanner;
                     System.out.print("New Status (numeric): ");     int status   = Integer.parseInt(scanner.nextLine());
                     System.out.print("New IsArchived (0/1): ");     int archived = Integer.parseInt(scanner.nextLine());
     
-                    String sql = "UPDATE Equipment SET Status=?, IsArchived=? WHERE EID=?";
+                    String sql = "UPDATE pruiz2.Equipment SET Status=?, IsArchived=? WHERE EID=?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, status);
                         ps.setInt(2, archived);
@@ -620,7 +621,7 @@ import java.util.Scanner;
                 }
                 case "4": { // Delete
                     System.out.print("EID to delete: "); int eid = Integer.parseInt(scanner.nextLine());
-                    String sql = "DELETE FROM Equipment WHERE EID=?";
+                    String sql = "DELETE FROM pruiz2.Equipment WHERE EID=?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, eid);
                         int cnt = ps.executeUpdate();
@@ -630,7 +631,7 @@ import java.util.Scanner;
                 }
                 case "5": { // By ID
                     System.out.print("EID: "); int eid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * FROM Equipment WHERE EID=?";
+                    String sql = "SELECT * FROM pruiz2.Equipment WHERE EID=?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, eid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -694,7 +695,7 @@ import java.util.Scanner;
                     System.out.print("Status (numeric): ");  int status = Integer.parseInt(scanner.nextLine());
     
                     String sql = """
-                        INSERT INTO EquipmentRental
+                        INSERT INTO pruiz2.EquipmentRental
                           (RID, MID, PID, EID, RentalDateTime, Status)
                         VALUES (?,?,?,?,CURRENT_TIMESTAMP,?)
                         """;
@@ -713,7 +714,7 @@ import java.util.Scanner;
                     String sql = """
                         SELECT RID, MID, PID, EID,
                                RentalDateTime, Status
-                          FROM EquipmentRental
+                          FROM pruiz2.EquipmentRental
                         """;
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
@@ -735,7 +736,7 @@ import java.util.Scanner;
                 case "3": { // Update status
                     System.out.print("RID to update: "); int rid    = Integer.parseInt(scanner.nextLine());
                     System.out.print("New Status (numeric): "); int status = Integer.parseInt(scanner.nextLine());
-                    String sql = "UPDATE EquipmentRental SET Status=? WHERE RID=?";
+                    String sql = "UPDATE pruiz2.EquipmentRental SET Status=? WHERE RID=?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, status);
                         ps.setInt(2, rid);
@@ -746,7 +747,7 @@ import java.util.Scanner;
                 }
                 case "4": { // Delete
                     System.out.print("RID to delete: "); int rid = Integer.parseInt(scanner.nextLine());
-                    String sql = "DELETE FROM EquipmentRental WHERE RID=?";
+                    String sql = "DELETE FROM pruiz2.EquipmentRental WHERE RID=?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, rid);
                         int cnt = ps.executeUpdate();
@@ -756,7 +757,7 @@ import java.util.Scanner;
                 }
                 case "5": { // By ID
                     System.out.print("RID: "); int rid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * FROM EquipmentRental WHERE RID=?";
+                    String sql = "SELECT * FROM pruiz2.EquipmentRental WHERE RID=?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, rid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -807,18 +808,17 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": { // Add
-                    int oid;
+                     int oid;
                     try (Statement s = conn.createStatement();
                         ResultSet r = s.executeQuery("SELECT lessonorder_seq.NEXTVAL FROM DUAL")) {
                         r.next();
                         oid = r.getInt(1);
                     }
-
                     System.out.print("Member ID: "); int mid = Integer.parseInt(scanner.nextLine());
                     System.out.print("Lesson ID: "); int lid = Integer.parseInt(scanner.nextLine());
                     System.out.print("Number of Sessions: "); int num = Integer.parseInt(scanner.nextLine());
                     String sql = 
-                      "INSERT INTO LessonOrder (OID, MID, LID, NumberOfSessions, SessionsLeft, PurchaseDate) " +
+                      "INSERT INTO pruiz2.LessonOrder (OID, MID, LID, NumberOfSessions, SessionsLeft, PurchaseDate) " +
                       "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, oid);
@@ -833,7 +833,7 @@ import java.util.Scanner;
                 case "2": { // List
                     String sql = 
                       "SELECT OID, MID, LID, NumberOfSessions, SessionsLeft, PurchaseDate " +
-                      "FROM LessonOrder";
+                      "FROM pruiz2.LessonOrder";
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
                         System.out.println("OID | MID | LID | Num | Left | Date");
@@ -851,7 +851,7 @@ import java.util.Scanner;
                 case "3": { // Update
                     System.out.print("OID to update: "); int oid = Integer.parseInt(scanner.nextLine());
                     System.out.print("New Sessions Left: "); int sl = Integer.parseInt(scanner.nextLine());
-                    String sql = "UPDATE LessonOrder SET SessionsLeft = ? WHERE OID = ?";
+                    String sql = "UPDATE pruiz2.LessonOrder SET SessionsLeft = ? WHERE OID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, sl);
                         ps.setInt(2, oid);
@@ -861,7 +861,7 @@ import java.util.Scanner;
                 } break;
                 case "4": { // Delete
                     System.out.print("OID to delete: "); int oid = Integer.parseInt(scanner.nextLine());
-                    String sql = "DELETE FROM LessonOrder WHERE OID = ?";
+                    String sql = "DELETE FROM pruiz2.LessonOrder WHERE OID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, oid);
                         int cnt = ps.executeUpdate();
@@ -870,7 +870,7 @@ import java.util.Scanner;
                 } break;
                 case "5": { // By ID
                     System.out.print("OID: "); int oid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * FROM LessonOrder WHERE OID = ?";
+                    String sql = "SELECT * FROM pruiz2.LessonOrder WHERE OID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, oid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -919,7 +919,7 @@ import java.util.Scanner;
         try {
             switch (c) {
             case "1": {  // Add
-                int iid;
+                 int iid;
                 try (Statement s = conn.createStatement();
                     ResultSet r = s.executeQuery("SELECT instructor_seq.NEXTVAL FROM DUAL")) {
                     r.next();
@@ -927,7 +927,7 @@ import java.util.Scanner;
                 }
                 System.out.print("Employee ID: "); int eid = Integer.parseInt(scanner.nextLine());
                 System.out.print("Certification (1/2/3): "); int cert = Integer.parseInt(scanner.nextLine());
-                String sql = "INSERT INTO Instructor (IID, EID, Certification) VALUES (?, ?, ?)";
+                String sql = "INSERT INTO pruiz2.Instructor (IID, EID, Certification) VALUES (?, ?, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, iid);
                     ps.setInt(2, eid);
@@ -938,7 +938,7 @@ import java.util.Scanner;
             } break;
 
             case "2": {  // List all
-                String sql = "SELECT IID, EID, Certification FROM Instructor";
+                String sql = "SELECT IID, EID, Certification FROM pruiz2.Instructor";
                 try (Statement st = conn.createStatement();
                      ResultSet rs = st.executeQuery(sql)) {
                     System.out.println("IID | EID | Certification");
@@ -955,7 +955,7 @@ import java.util.Scanner;
                 System.out.print("IID to update: "); int iid = Integer.parseInt(scanner.nextLine());
                 System.out.print("New Employee ID: "); int eid = Integer.parseInt(scanner.nextLine());
                 System.out.print("New Certification (1/2/3): "); int cert = Integer.parseInt(scanner.nextLine());
-                String sql = "UPDATE Instructor SET EID = ?, Certification = ? WHERE IID = ?";
+                String sql = "UPDATE pruiz2.Instructor SET EID = ?, Certification = ? WHERE IID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, eid);
                     ps.setInt(2, cert);
@@ -967,7 +967,7 @@ import java.util.Scanner;
 
             case "4": {  // Delete
                 System.out.print("IID to delete: "); int iid = Integer.parseInt(scanner.nextLine());
-                String sql = "DELETE FROM Instructor WHERE IID = ?";
+                String sql = "DELETE FROM pruiz2.Instructor WHERE IID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, iid);
                     int cnt = ps.executeUpdate();
@@ -977,7 +977,7 @@ import java.util.Scanner;
 
             case "5": {  // By ID
                 System.out.print("IID: "); int iid = Integer.parseInt(scanner.nextLine());
-                String sql = "SELECT * FROM Instructor WHERE IID = ?";
+                String sql = "SELECT * FROM pruiz2.Instructor WHERE IID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, iid);
                     try (ResultSet rs = ps.executeQuery()) {
@@ -1020,7 +1020,6 @@ import java.util.Scanner;
                         r.next();
                         eid = r.getInt(1);
                     }
-
                     System.out.print("Property ID: "); int pid = Integer.parseInt(scanner.nextLine());
                     System.out.print("First Name: "); String fn = scanner.nextLine();
                     System.out.print("Last Name: ");  String ln = scanner.nextLine();
@@ -1031,7 +1030,7 @@ import java.util.Scanner;
                     System.out.print("Start Date (yyyy-mm-dd): "); Date sd = Date.valueOf(scanner.nextLine());
                     System.out.print("Monthly Salary: "); BigDecimal sal = new BigDecimal(scanner.nextLine());
                     String sql =
-                      "INSERT INTO Employee (EID, PID, FirstName, LastName, Position, Education, Gender, Age, StartDate, MonthlySalary) " +
+                      "INSERT INTO pruiz2.Employee (EID, PID, FirstName, LastName, Position, Education, Gender, Age, StartDate, MonthlySalary) " +
                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, eid);
@@ -1051,7 +1050,7 @@ import java.util.Scanner;
                 case "2": { // List
                     String sql =
                       "SELECT EID, PID, FirstName, LastName, Position, Education, Gender, Age, StartDate, MonthlySalary " +
-                      "FROM Employee";
+                      "FROM pruiz2.Employee";
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
                         System.out.println("EID | PID | First | Last | Pos | Edu | Gen | Age | Start | Salary");
@@ -1075,7 +1074,7 @@ import java.util.Scanner;
                     System.out.print("New Position: "); String pos = scanner.nextLine();
                     System.out.print("New Education: "); String edu = scanner.nextLine();
                     String sql = 
-                      "UPDATE Employee SET Position = ?, Education = ? WHERE EID = ?";
+                      "UPDATE pruiz2.Employee SET Position = ?, Education = ? WHERE EID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setString(1, pos);
                         ps.setString(2, edu);
@@ -1086,7 +1085,7 @@ import java.util.Scanner;
                 } break;
                 case "4": { // Delete
                     System.out.print("EID to delete: "); int eid = Integer.parseInt(scanner.nextLine());
-                    String sql = "DELETE FROM Employee WHERE EID = ?";
+                    String sql = "DELETE FROM pruiz2.Employee WHERE EID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, eid);
                         int cnt = ps.executeUpdate();
@@ -1095,7 +1094,7 @@ import java.util.Scanner;
                 } break;
                 case "5": { // By ID
                     System.out.print("EID: "); int eid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * FROM Employee WHERE EID = ?";
+                    String sql = "SELECT * FROM pruiz2.Employee WHERE EID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, eid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -1137,13 +1136,12 @@ import java.util.Scanner;
         try {
             switch (c) {
             case "1": {  // Create
-                int tid;
+                 int tid;
                 try (Statement s = conn.createStatement();
                     ResultSet r = s.executeQuery("SELECT trail_seq.NEXTVAL FROM DUAL")) {
                     r.next();
                     tid = r.getInt(1);
                 }
-
                 System.out.print("Name: "); String name = scanner.nextLine();
                 System.out.print("Start Location: "); String start = scanner.nextLine();
                 System.out.print("End Location: "); String end = scanner.nextLine();
@@ -1151,7 +1149,7 @@ import java.util.Scanner;
                 System.out.print("Difficulty: "); String diff = scanner.nextLine();
                 System.out.print("Category: "); String cat = scanner.nextLine();
                 String sql =
-                  "INSERT INTO Trail (TID, Name, StartLocation, EndLocation, Status, Difficulty, Category) " +
+                  "INSERT INTO pruiz2.Trail (TID, Name, StartLocation, EndLocation, Status, Difficulty, Category) " +
                   "VALUES (?, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, tid);
@@ -1167,7 +1165,7 @@ import java.util.Scanner;
             } break;
 
             case "2": {  // List all
-                String sql = "SELECT TID, Name, StartLocation, EndLocation, Status, Difficulty, Category FROM Trail";
+                String sql = "SELECT TID, Name, StartLocation, EndLocation, Status, Difficulty, Category FROM pruiz2.Trail";
                 try (Statement stt = conn.createStatement();
                      ResultSet rs = stt.executeQuery(sql)) {
                     System.out.println("TID | Name | Start | End | Status | Difficulty | Category");
@@ -1189,7 +1187,7 @@ import java.util.Scanner;
             case "3": {  // Update status
                 System.out.print("TID to update: "); int tid = Integer.parseInt(scanner.nextLine());
                 System.out.print("New Status (1=open, 0=closed): "); int st = Integer.parseInt(scanner.nextLine());
-                String sql = "UPDATE Trail SET Status = ? WHERE TID = ?";
+                String sql = "UPDATE pruiz2.Trail SET Status = ? WHERE TID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, st);
                     ps.setInt(2, tid);
@@ -1200,7 +1198,7 @@ import java.util.Scanner;
 
             case "4": {  // Delete
                 System.out.print("TID to delete: "); int tid = Integer.parseInt(scanner.nextLine());
-                String sql = "DELETE FROM Trail WHERE TID = ?";
+                String sql = "DELETE FROM pruiz2.Trail WHERE TID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, tid);
                     int cnt = ps.executeUpdate();
@@ -1210,7 +1208,7 @@ import java.util.Scanner;
 
             case "5": {  // By ID
                 System.out.print("TID: "); int tid = Integer.parseInt(scanner.nextLine());
-                String sql = "SELECT * FROM Trail WHERE TID = ?";
+                String sql = "SELECT * FROM pruiz2.Trail WHERE TID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, tid);
                     try (ResultSet rs = ps.executeQuery()) {
@@ -1251,13 +1249,12 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": {  // Create
-                    int lid;
+                     int lid;
                     try (Statement s = conn.createStatement();
                         ResultSet r = s.executeQuery("SELECT lift_seq.NEXTVAL FROM DUAL")) {
                         r.next();
                         lid = r.getInt(1);
                     }
-
                     System.out.print("Name: ");
                     String name = scanner.nextLine();
                     System.out.print("Open Time (HH24:MI): ");
@@ -1268,7 +1265,7 @@ import java.util.Scanner;
                     int status = Integer.parseInt(scanner.nextLine());
     
                     String sql = 
-                      "INSERT INTO Lift (LiftID, Name, OpenTime, CloseTime, Status) " +
+                      "INSERT INTO pruiz2.Lift (LiftID, Name, OpenTime, CloseTime, Status) " +
                       "VALUES (?, ?, ?, ?, ?)";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, lid);
@@ -1283,7 +1280,7 @@ import java.util.Scanner;
     
                 case "2": {  // List all
                     String sql = 
-                      "SELECT LiftID, Name, OpenTime, CloseTime, Status FROM Lift";
+                      "SELECT LiftID, Name, OpenTime, CloseTime, Status FROM pruiz2.Lift";
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
                         System.out.println("LiftID | Name | Open  | Close | Status");
@@ -1306,7 +1303,7 @@ import java.util.Scanner;
                     System.out.print("New Status (1=open, 0=closed): ");
                     int status = Integer.parseInt(scanner.nextLine());
     
-                    String sql = "UPDATE Lift SET Status = ? WHERE LiftID = ?";
+                    String sql = "UPDATE pruiz2.Lift SET Status = ? WHERE LiftID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, status);
                         ps.setInt(2, lid);
@@ -1319,7 +1316,7 @@ import java.util.Scanner;
                     System.out.print("LiftID to delete: ");
                     int lid = Integer.parseInt(scanner.nextLine());
     
-                    String sql = "DELETE FROM Lift WHERE LiftID = ?";
+                    String sql = "DELETE FROM pruiz2.Lift WHERE LiftID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, lid);
                         int cnt = ps.executeUpdate();
@@ -1331,7 +1328,7 @@ import java.util.Scanner;
                     System.out.print("LiftID: ");
                     int lid = Integer.parseInt(scanner.nextLine());
     
-                    String sql = "SELECT * FROM Lift WHERE LiftID = ?";
+                    String sql = "SELECT * FROM pruiz2.Lift WHERE LiftID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, lid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -1376,11 +1373,10 @@ import java.util.Scanner;
                         r.next();
                         uid = r.getInt(1);
                     }
-
                     System.out.print("PassID: ");int pid  = Integer.parseInt(scanner.nextLine());
                     System.out.print("LiftID: ");int lid  = Integer.parseInt(scanner.nextLine());
                     String sql = 
-                      "INSERT INTO LiftUsage (UID, PID, LiftID, DateTimeOfUse) " +
+                      "INSERT INTO pruiz2.LiftUsage (UID, PID, LiftID, DateTimeOfUse) " +
                       "VALUES (?, ?, ?, CURRENT_TIMESTAMP)";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, uid);
@@ -1392,7 +1388,7 @@ import java.util.Scanner;
                 } break;
                 case "2": {  // List all logs
                     String sql = 
-                      "SELECT UID, PID, LiftID, DateTimeOfUse FROM LiftUsage";
+                      "SELECT UID, PID, LiftID, DateTimeOfUse FROM pruiz2.LiftUsage";
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
                         System.out.println("UID | PID | LiftID | DateTime");
@@ -1436,11 +1432,11 @@ import java.util.Scanner;
                                lo.NumberOfSessions, lo.SessionsLeft,
                                e.FirstName, e.LastName,
                                l.TimeOfClass
-                          FROM LessonOrder lo
+                          FROM pruiz2.LessonOrder lo
                           JOIN Lesson l        ON lo.LID = l.LID
-                          JOIN Instructor i    ON l.IID = i.IID
-                          JOIN Employee e      ON i.EID = e.EID
-                          JOIN Member m        ON lo.MID = m.MID
+                          JOIN pruiz2.Instructor i    ON l.IID = i.IID
+                          JOIN pruiz2.Employee e      ON i.EID = e.EID
+                          JOIN pruiz2.Member m        ON lo.MID = m.MID
                          WHERE m.MID = ?
                         """;
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -1468,8 +1464,8 @@ import java.util.Scanner;
                     System.out.println("=== Lift Rides ===");
                     String sql1 = """
                         SELECT lf.Name, lu.DateTimeOfUse
-                          FROM LiftUsage lu
-                          JOIN Lift lf ON lu.LiftID = lf.LiftID
+                          FROM pruiz2.LiftUsage lu
+                          JOIN pruiz2.Lift lf ON lu.LiftID = lf.LiftID
                          WHERE lu.PID = ?
                         """;
                     try (PreparedStatement ps = conn.prepareStatement(sql1)) {
@@ -1486,7 +1482,7 @@ import java.util.Scanner;
                     System.out.println("=== Equipment Rentals ===");
                     String sql2 = """
                         SELECT eq.Type, er.Status, er.RentalDateTime
-                          FROM EquipmentRental er
+                          FROM pruiz2.EquipmentRental er
                           JOIN Equipment eq ON er.EID = eq.EID
                          WHERE er.PID = ?
                         """;
@@ -1501,13 +1497,14 @@ import java.util.Scanner;
                         }
                     }
                 } break;
-    
+
+                // CHECK HERE
                 case "3": {
                     String sql = """
                         SELECT t.Name, t.Category, lf.Name
-                          FROM Trail t
-                          JOIN LiftTrail lt ON t.TID = lt.TID
-                          JOIN Lift lf      ON lt.LiftID = lf.LiftID
+                          FROM pruiz2.Trail t
+                          JOIN pruiz2.Trail lt ON t.TID = lt.TID
+                          JOIN pruiz2.Lift lf      ON lt.LiftID = lf.LiftID
                          WHERE t.Difficulty = 'Intermediate'
                            AND t.Status = 1
                            AND lf.Status = 1
@@ -1529,7 +1526,7 @@ import java.util.Scanner;
                     int lid = Integer.parseInt(scanner.nextLine());
                     String sql = """
                         SELECT i.Certification
-                          FROM Instructor i
+                          FROM pruiz2.Instructor i
                           JOIN Lesson l ON i.IID = l.IID
                          WHERE l.LID = ?
                         """;
@@ -1571,13 +1568,12 @@ import java.util.Scanner;
                         r.next();
                         propertyId = r.getInt(1);
                     }
-
                     System.out.print("Type: ");           String ty  = scanner.nextLine();
                     System.out.print("Name: ");           String nm  = scanner.nextLine();
                     System.out.print("Monthly Income: "); BigDecimal inc = new BigDecimal(scanner.nextLine());
     
                     String sql = """
-                        INSERT INTO Property
+                        INSERT INTO pruiz2.Property
                           (PropertyID, Type, Name, MonthlyIncome)
                         VALUES (?,?,?,?)
                         """;
@@ -1592,7 +1588,7 @@ import java.util.Scanner;
                 } break;
     
                 case "2": {  // List all
-                    String sql = "SELECT PropertyID, Type, Name, MonthlyIncome FROM Property";
+                    String sql = "SELECT PropertyID, Type, Name, MonthlyIncome FROM pruiz2.Property";
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
                         System.out.println("PID | Type | Name | Income");
@@ -1612,7 +1608,7 @@ import java.util.Scanner;
                     System.out.print("New Monthly Income: ");
                     BigDecimal inc = new BigDecimal(scanner.nextLine());
     
-                    String sql = "UPDATE Property SET MonthlyIncome = ? WHERE PropertyID = ?";
+                    String sql = "UPDATE pruiz2.Property SET MonthlyIncome = ? WHERE PropertyID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setBigDecimal(1, inc);
                         ps.setInt(2, pid);
@@ -1624,7 +1620,7 @@ import java.util.Scanner;
                 case "4": {  // Delete
                     System.out.print("Property ID to delete: ");
                     int pid = Integer.parseInt(scanner.nextLine());
-                    String sql = "DELETE FROM Property WHERE PropertyID = ?";
+                    String sql = "DELETE FROM pruiz2.Property WHERE PropertyID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, pid);
                         int cnt = ps.executeUpdate();
@@ -1635,7 +1631,7 @@ import java.util.Scanner;
                 case "5": {  // By ID
                     System.out.print("Property ID: ");
                     int pid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * FROM Property WHERE PropertyID = ?";
+                    String sql = "SELECT * FROM pruiz2.Property WHERE PropertyID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, pid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -1664,7 +1660,7 @@ import java.util.Scanner;
                 System.out.println("Error: " + e.getMessage());
             }
         }
-    } 
+    }    
     private void lessonMenu() {
         while (true) {
             System.out.println("-- Lesson -- 1)Add  2)List  3)Upd  4)Del  5)ByID  0)Back");
@@ -1809,7 +1805,4 @@ import java.util.Scanner;
             }
         }
     }
-       
 }
-
-
