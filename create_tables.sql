@@ -200,5 +200,86 @@ CREATE TABLE ChangeLog (
 );
 GRANT SELECT ON ChangeLog TO PUBLIC;
 
+ALTER TABLE SkiPass
+  ADD CONSTRAINT chk_pass_type
+    CHECK (PassType IN ('OneDay','TwoDay','FourDay','Season'));
 
+ALTER TABLE Equipment
+  ADD CONSTRAINT chk_equip_size
+     CHECK (
+       (Type = 1 AND SizeOrLength BETWEEN 4 AND 14) OR
+       (Type = 2 AND SizeOrLength BETWEEN 100 AND 140) OR
+       …
+     );
+
+CREATE OR REPLACE TRIGGER trg_liftusage_after
+  AFTER INSERT ON LiftUsage
+  FOR EACH ROW
+BEGIN
+  UPDATE SkiPass
+     SET RemainingUses = RemainingUses - 1
+   WHERE PID = :NEW.PID
+     AND RemainingUses > 0
+     AND ExpirationDate >= SYSTIMESTAMP;
+END;
+
+CREATE OR REPLACE TRIGGER trg_rental_after
+  AFTER INSERT ON EquipmentRental
+  FOR EACH ROW
+BEGIN
+  UPDATE SkiPass
+     SET RemainingUses = RemainingUses - 1
+   WHERE PID = :NEW.PID
+     AND RemainingUses > 0
+     AND ExpirationDate >= SYSTIMESTAMP;
+END;
+
+CREATE OR REPLACE VIEW GrossMonthlyIncome AS
+SELECT
+  (SELECT SUM(MonthlyIncome) FROM Property)
+  -
+  (SELECT SUM(MonthlySalary)  FROM Employee)
+  AS GrossIncome
+FROM DUAL;
+
+CREATE OR REPLACE TRIGGER trg_equip_log
+  BEFORE INSERT
+  ON Equipment
+  FOR EACH ROW
+DECLARE
+  v_cid NUMBER;
+BEGIN
+  v_cid := changelog_seq.NEXTVAL;
+  INSERT INTO ChangeLog(ChangeID, Description)
+    VALUES (
+      v_cid,
+      'Added equipment EID=' || :NEW.EID
+       || ' type=' || :NEW.Type
+       || ' size=' || :NEW.SizeOrLength
+    );
+  :NEW.ChangeID := v_cid;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_skipass_set_exp
+  BEFORE INSERT
+  ON SkiPass
+  FOR EACH ROW
+BEGIN
+  IF :NEW.ExpirationDate IS NULL THEN
+    CASE :NEW.PassType
+      WHEN 'OneDay'   THEN
+        :NEW.ExpirationDate := :NEW.PurchaseDateTime + INTERVAL '1' DAY;
+      WHEN 'TwoDay'   THEN
+        :NEW.ExpirationDate := :NEW.PurchaseDateTime + INTERVAL '2' DAY;
+      WHEN 'FourDay'  THEN
+        :NEW.ExpirationDate := :NEW.PurchaseDateTime + INTERVAL '4' DAY;
+      WHEN 'Season'   THEN
+        :NEW.ExpirationDate := TO_TIMESTAMP('2025-04-30 23:59:59', 'YYYY-MM-DD HH24:MI:SS');
+      ELSE
+        RAISE_APPLICATION_ERROR(-20001, 'Unknown PassType '||:NEW.PassType);
+    END CASE;
+  END IF;
+END;
+/
 
