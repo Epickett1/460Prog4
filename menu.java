@@ -36,23 +36,27 @@ import java.sql.*;
 import java.time.Instant;
 import java.util.Scanner;
  
- public class menu {
+public class menu {
+    private static final String URL = "jdbc:oracle:thin:@aloe.cs.arizona.edu:1521:oracle";
+    private Connection conn;
+    private Scanner scanner = new Scanner(System.in);
 
-     // Global variables
-     private static final String URL  = "jdbc:oracle:thin:@aloe.cs.arizona.edu:1521:oracle"; // URL to oracle database
-     private static final String USER = "<YOUR_USER>";                                       // User's Oracle username
-     private static final String PASS = "<YOUR_PASS>";                                       // User's Oracle password
-     
-  
-     private Connection conn;
-     private Scanner scanner = new Scanner(System.in);
- 
-     // Main
-     public static void main(String[] args) {
-         new menu().run();
-     }
-     
-    /*
+    public static void main(String[] args) {
+        if (args.length != 2) {
+            System.out.println("\nUsage: java menu <username> <password>\n"
+                    + "    where <username> is your Oracle DBMS username,\n"
+                    + "    and <password> is your Oracle password (not your system password).\n");
+            System.exit(-1);
+        }
+        
+        String username = args[0];
+        String password = args[1];
+        
+        new menu().run(username, password);
+    }
+
+
+     /*
      * Method run()
      *
      * This method serves as the main control loop for the ski resort's database management CLI.
@@ -69,39 +73,67 @@ import java.util.Scanner;
      * Returns:
      *      void -- This method does not return a value. It manages program control flow and DB session.
      */
-     public void run() {
-         try {
-             conn = DriverManager.getConnection(URL, USER, PASS);
-             boolean exit = false;
-             while (!exit) {
-                 printMainMenu();
-                 String choice = scanner.nextLine().trim();
-                 switch (choice) {
-                     case "1": memberMenu();    break;
-                     case "2": skiPassMenu();   break;
-                     case "3": equipmentMenu(); break;
-                     case "4": rentalMenu();    break;
-                     case "5": lessonOrderMenu(); break;
-                     case "6": instructorMenu();break;
-                     case "7": employeeMenu();  break;
-                     case "8": trailMenu();     break;
-                     case "9": liftMenu();      break;
-                     case "10": liftUsageMenu();break;
-                     case "11": queryMenu();    break;
-                     case "12": propertyMenu(); break;
-                     case "13": lessonMenu();   break;
-                     case "0": exit = true;     break;
-                     default: System.out.println("Invalid option");
-                 }
-             }
-         } catch (SQLException e) {
-             e.printStackTrace();
-         } finally {
-             try { if (conn != null) conn.close(); } catch (SQLException ignored) {}
-         }
-     }
-     
-     // Display the user menu
+    public void run(String username, String password) {
+        try {
+            conn = getOracleConnection(username, password);
+            boolean exit = false;
+            while (!exit) {
+                printMainMenu();
+                String choice = scanner.nextLine().trim();
+                switch (choice) {
+                    case "1": memberMenu();    break;
+                    case "2": skiPassMenu();   break;
+                    case "3": equipmentMenu(); break;
+                    case "4": rentalMenu();    break;
+                    case "5": lessonOrdMenu(); break;
+		    case "6": lessonMenu();    break;
+                    case "7": instructorMenu();break;
+                    case "8": employeeMenu();  break;
+                    case "9": trailMenu();     break;
+                    case "10": liftMenu();      break;
+                    case "11": liftUsageMenu();break;
+		    case "12": propertyMenu(); break;
+                    case "13": queryMenu();    break;
+                    case "0": exit = true;     break;
+                    default: System.out.println("Invalid option");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try { 
+                if (conn != null) conn.close(); 
+            } catch (SQLException ignored) {}
+        }
+    }
+
+    private Connection getOracleConnection(String username, String password) {
+        Connection dbconn = null;
+        
+        try {
+            // Load the Oracle JDBC driver
+            Class.forName("oracle.jdbc.OracleDriver");
+        } catch (ClassNotFoundException e) {
+            System.err.println("*** ClassNotFoundException: Error loading Oracle JDBC driver.\n"
+                    + "\tPerhaps the driver is not on the Classpath?");
+            System.exit(-1);
+        }
+        
+        try {
+            // Establish connection to Oracle
+            dbconn = DriverManager.getConnection(URL, username, password);
+            System.out.println("Connected to Oracle database successfully.");
+        } catch (SQLException e) {
+            System.err.println("*** SQLException: Could not open JDBC connection.");
+            System.err.println("\tMessage:   " + e.getMessage());
+            System.err.println("\tSQLState:  " + e.getSQLState());
+            System.err.println("\tErrorCode: " + e.getErrorCode());
+            System.exit(-1);
+        }
+        
+        return dbconn;
+    }
+ 
      private void printMainMenu() {
          System.out.println("\n=== CSc 460 Ski Resort CLI ===");
          System.out.println("1) Member ");
@@ -109,19 +141,19 @@ import java.util.Scanner;
          System.out.println("3) Equipment ");
          System.out.println("4) Rental ");
          System.out.println("5) Lesson Purchase ");
-         System.out.println("6) Instructor ");
-         System.out.println("7) Employee ");
-         System.out.println("8) Trail ");
-         System.out.println("9) Lift ");
-         System.out.println("10) Lift Usage ");
-         System.out.println("11) Queries");
+	 System.out.println("6) Lesson ");
+         System.out.println("7) Instructor ");
+         System.out.println("8) Employee ");
+         System.out.println("9) Trail ");
+         System.out.println("10) Lift ");
+         System.out.println("11) Lift Usage ");
          System.out.println("12) Property ");
-         System.out.println("13) Lesson Details ");
+         System.out.println("13) Queries ");
          System.out.println("0) Exit");
          System.out.print("> ");
      }
-     
-    /*
+ 
+     /*
      * Method memberMenu()
      *
      * This method provides a submenu for managing resort members within the database system.
@@ -144,12 +176,7 @@ import java.util.Scanner;
                 switch (c) {
                 case "1": { // Create
                     System.out.print("MID: ");
-                    int mid;
-                    try (Statement s = conn.createStatement();
-                    ResultSet r = s.executeQuery("SELECT pruiz2.member_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        mid = r.getInt(1);
-                    }
+                    int mid = Integer.parseInt(scanner.nextLine());
                     System.out.print("First Name: ");
                     String first = scanner.nextLine();
                     System.out.print("Last Name: ");
@@ -188,7 +215,7 @@ import java.util.Scanner;
                         SELECT MID, FirstName, LastName,
                             PhoneNumber, EmailAddress,
                             DateOfBirth, EmergencyContact
-                        FROM pruiz2.Member
+                        FROM pruiz2.Member 
                         ORDER BY MID ASC
                         """;
                     try (Statement st = conn.createStatement();
@@ -247,10 +274,10 @@ import java.util.Scanner;
                     System.out.print("MID to delete: ");
                     int mid = Integer.parseInt(scanner.nextLine());
 
-                    // Check for active passes
+                    // 1) Active ski‐passes?
                     String passCheck =
-                   "SELECT COUNT(*) FROM pruiz2.SkiPass " +
-                      "WHERE MID = ? AND (RemainingUses > 0 OR ExpirationDate > SYSTIMESTAMP)";
+                    "SELECT COUNT(*) FROM pruiz2.SkiPass " +
+                    "WHERE MID = ? AND (RemainingUses > 0 OR ExpirationDate > SYSTIMESTAMP)";
                     try (PreparedStatement ps = conn.prepareStatement(passCheck)) {
                         ps.setInt(1, mid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -262,7 +289,7 @@ import java.util.Scanner;
                         }
                     }
 
-                    // Check for Rentals
+                    // 2) Open equipment rentals? (Status = 0 ⇒ out)
                     String rentCheck =
                     "SELECT COUNT(*) FROM pruiz2.EquipmentRental WHERE MID = ? AND Status = 0";
                     try (PreparedStatement ps = conn.prepareStatement(rentCheck)) {
@@ -276,9 +303,9 @@ import java.util.Scanner;
                         }
                     }
 
-                    // Check for unused lessons
+                    // 3) Unused lesson sessions?
                     String lessonCheck =
-                     "SELECT COUNT(*) FROM pruiz2.LessonOrder WHERE MID = ? AND SessionsLeft > 0";
+                    "SELECT COUNT(*) FROM pruiz2.LessonOrder WHERE MID = ? AND SessionsLeft > 0";
                     try (PreparedStatement ps = conn.prepareStatement(lessonCheck)) {
                         ps.setInt(1, mid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -290,43 +317,12 @@ import java.util.Scanner;
                         }
                     }
 
-                    // Lift usage 
-                    String delLiftUsage =
-                      "DELETE FROM pruiz2.LiftUsage WHERE PID IN (SELECT PID FROM pruiz2.SkiPass WHERE MID = ?)";
-                    try (PreparedStatement ps = conn.prepareStatement(delLiftUsage)) {
-                        ps.setInt(1, mid);
-                        ps.executeUpdate();
-                    }
-                
-                    // Equipment rentals
-                    String delRentals = "DELETE FROM pruiz2.EquipmentRental WHERE MID = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(delRentals)) {
-                        ps.setInt(1, mid);
-                        ps.executeUpdate();
-                    }
-                
-                    // Lesson orders
-                    String delLessons = "DELETE FROM pruiz2.LessonOrder WHERE MID = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(delLessons)) {
-                        ps.setInt(1, mid);
-                        ps.executeUpdate();
-                    }
-                
-                    // Ski passes
-                    String delPasses = "DELETE FROM pruiz2.SkiPass WHERE MID = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(delPasses)) {
-                        ps.setInt(1, mid);
-                        ps.executeUpdate();
-                    }
-                
-                    // Member
-                    String delMember = "DELETE FROM pruiz2.Member WHERE MID = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(delMember)) {
+                    // All clear ⇒ delete
+                    String delSql = "DELETE FROM pruiz2.Member WHERE MID = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(delSql)) {
                         ps.setInt(1, mid);
                         int cnt = ps.executeUpdate();
-                        System.out.println(cnt>0
-                            ? "Member and all related data deleted."
-                            : "No such MID.");
+                        System.out.println(cnt>0 ? "Member deleted." : "No such MID.");
                     }
                 } break;
 
@@ -367,7 +363,7 @@ import java.util.Scanner;
         }
     }
 
-    /*
+     /*
      * Method skiPassMenu()
      *
      * This method shows a submenu that lets the user manage ski passes in the system.
@@ -389,12 +385,7 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": { // Add
-                    int pid;
-                    try (Statement s = conn.createStatement();
-                        ResultSet r = s.executeQuery("SELECT pruiz2.skipass_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        pid = r.getInt(1);
-                    }
+                    System.out.print("PID: ");       int pid   = Integer.parseInt(scanner.nextLine());
                     System.out.print("Total Uses: ");int total = Integer.parseInt(scanner.nextLine());
                     System.out.print("Remaining Uses: "); int rem = Integer.parseInt(scanner.nextLine());
                     System.out.print("Purchase Time (yyyy-MM-dd HH:mm:ss): ");
@@ -402,7 +393,7 @@ import java.util.Scanner;
                     System.out.print("Expiration (yyyy-MM-dd): ");
                     Date exp = Date.valueOf(scanner.nextLine());
                     System.out.print("Price: ");      BigDecimal price = new BigDecimal(scanner.nextLine());
-                    System.out.print("Pass Type: ");  String type = scanner.nextLine();
+                    System.out.print("Pass Type (OneDay, TwoDay, Season): ");  String type = scanner.nextLine();
                     System.out.print("Member ID: ");  int mid   = Integer.parseInt(scanner.nextLine());
                     System.out.print("IsValid (1=Y,0=N): ");
                     int valid = Integer.parseInt(scanner.nextLine());
@@ -434,7 +425,8 @@ import java.util.Scanner;
                         SELECT PID, MID, PassType,
                                PurchaseDateTime, ExpirationDate,
                                TotalUses, RemainingUses, Price, IsValid
-                          FROM pruiz2.SkiPass
+                          FROM pruiz2.SkiPass 
+                          ORDER BY PID ASC
                         """;
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
@@ -483,7 +475,7 @@ import java.util.Scanner;
                                 Timestamp exp = rs.getTimestamp("ExpirationDate");
                                 if (rem == 0 && exp.before(Timestamp.from(Instant.now()))) {
                                     // safe to delete
-                                    try (PreparedStatement del = conn.prepareStatement("DELETE FROM pruiz2.SkiPass WHERE PID = ?")) {
+                                    try (PreparedStatement del = conn.prepareStatement("DELETE FROM SkiPass WHERE PID = ?")) {
                                     del.setInt(1, pid);
                                     del.executeUpdate();
                                     System.out.println("SkiPass deleted.");
@@ -553,31 +545,29 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": { // Add
-                     int eid;
-                    try (Statement s = conn.createStatement();
-                        ResultSet r = s.executeQuery("SELECT pruiz2.equipment_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        eid = r.getInt(1);
-                    }
-                    System.out.print("Type (numeric code): ");   int type     = Integer.parseInt(scanner.nextLine());
-                    System.out.print("Status (numeric): ");      int status   = Integer.parseInt(scanner.nextLine());
-                    System.out.print("SizeOrLength: ");          double size   = Double.parseDouble(scanner.nextLine());
-                    System.out.print("IsArchived (0/1): ");      int archived = Integer.parseInt(scanner.nextLine());
-                    System.out.print("ChangeID: ");              int cid      = Integer.parseInt(scanner.nextLine());
-    
-                    String sql = """
-                        INSERT INTO pruiz2.Equipment
-                          (EID, Type, Status, SizeOrLength, IsArchived, ChangeID)
-                        VALUES (?,?,?,?,?,?)
-                        """;
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setInt(1, eid);
-                        ps.setInt(2, type);
-                        ps.setInt(3, status);
-                        ps.setDouble(4, size);
-                        ps.setInt(5, archived);
-                        ps.setInt(6, cid);
-                        ps.executeUpdate();
+                    System.out.print("EID: ");           int eid      = Integer.parseInt(scanner.nextLine());
+                    System.out.print("Type (Boot = 1, Ski Pole = 2, Snowboard = 3, Alpine Skis = 4): ");   int type     = Integer.parseInt(scanner.nextLine());
+                    System.out.print("SizeOrLength (1: 4-14, 2: 100-140, 3: 115-200, 4: 90-178): ");          double size   = Double.parseDouble(scanner.nextLine());
+                    int changeid = eid;
+
+                    // Insert the changelog entry first
+                    String sqlChangeLog = 
+                    "INSERT INTO pruiz2.ChangeLog (ChangeID, Description) VALUES (?, 1)";
+                    try (PreparedStatement psChange = conn.prepareStatement(sqlChangeLog)) {
+                    psChange.setInt(1, changeid);
+                    psChange.executeUpdate();
+                }
+        
+                    // Now insert equipment with the CID
+                String sqlEquipment = 
+                "INSERT INTO pruiz2.Equipment (EID, Type, Status, SizeOrLength, IsArchived, ChangeID) " +
+                "VALUES (?, ?, TRUE, ?, FALSE, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlEquipment)) {
+                    ps.setInt(1, eid);
+                    ps.setInt(2, type);
+                    ps.setDouble(3, size);
+                    ps.setInt(4, changeid);
+                    ps.executeUpdate();
                     }
                     System.out.println("Equipment added.");
                     break;
@@ -586,7 +576,8 @@ import java.util.Scanner;
                     String sql = """
                         SELECT EID, Type, Status,
                                SizeOrLength, IsArchived, ChangeID
-                          FROM pruiz2.Equipment
+                          FROM pruiz2.Equipment 
+                          ORDER BY EID ASC
                         """;
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
@@ -663,8 +654,8 @@ import java.util.Scanner;
             }
         }
     }    
-    
-    /*
+ 
+     /*
      * Method rentalMenu()
      *
      * This method opens a menu for managing rental records in the database.
@@ -684,12 +675,7 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": { // Add (uses current timestamp)
-                    int rid;
-                    try (Statement s = conn.createStatement();
-                        ResultSet r = s.executeQuery("SELECT pruiz2.equipmentrental_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        rid = r.getInt(1);
-                    }
+                    System.out.print("RID: "); int rid = Integer.parseInt(scanner.nextLine());
                     System.out.print("Member ID (MID): ");  int mid    = Integer.parseInt(scanner.nextLine());
                     System.out.print("Pass ID (PID): ");    int pid    = Integer.parseInt(scanner.nextLine());
                     System.out.print("Equipment ID (EID): "); int eid    = Integer.parseInt(scanner.nextLine());
@@ -715,7 +701,8 @@ import java.util.Scanner;
                     String sql = """
                         SELECT RID, MID, PID, EID,
                                RentalDateTime, Status
-                          FROM pruiz2.EquipmentRental
+                          FROM pruiz2.EquipmentRental 
+                          ORDER BY RID ASC
                         """;
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
@@ -791,7 +778,7 @@ import java.util.Scanner;
     }    
 
     /*
-     * Method lessonOrderMenu()
+     * Method lessonOrdMenu()
      *
      * This method opens a menu for managing lesson order records in the database.
      * Users can add new lesson orders, view all lessons, or look up lessons by ID.
@@ -801,20 +788,15 @@ import java.util.Scanner;
      * Returns:
      *      void -- Doesn’t return anything. It handles user actions and updates the database.
      */
-    private void lessonOrderMenu() {
+    private void lessonOrdMenu() {
         while (true) {
-            System.out.println("-- Lesson Purchase  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
+            System.out.println("-- Lesson Purchase  -- 1)Buy 2)List Lessons 3)Update 4)Delete 5)ByID 0)Back");
             System.out.print("> ");
             String c = scanner.nextLine().trim();
             try {
                 switch (c) {
                 case "1": { // Add
-                     int oid;
-                    try (Statement s = conn.createStatement();
-                        ResultSet r = s.executeQuery("SELECT pruiz2.lessonorder_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        oid = r.getInt(1);
-                    }
+                    System.out.print("OID: "); int oid = Integer.parseInt(scanner.nextLine());
                     System.out.print("Member ID: "); int mid = Integer.parseInt(scanner.nextLine());
                     System.out.print("Lesson ID: "); int lid = Integer.parseInt(scanner.nextLine());
                     System.out.print("Number of Sessions: "); int num = Integer.parseInt(scanner.nextLine());
@@ -899,6 +881,7 @@ import java.util.Scanner;
             }
         }
     }
+    
 
     /*
      * Method instructorMenu()
@@ -911,7 +894,6 @@ import java.util.Scanner;
      * Returns:
      *      void -- Doesn’t return anything. It handles user actions and updates the database.
      */
-    
     private void instructorMenu() {
     while (true) {
         System.out.println("-- Instructor  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -920,15 +902,10 @@ import java.util.Scanner;
         try {
             switch (c) {
             case "1": {  // Add
-                 int iid;
-                try (Statement s = conn.createStatement();
-                    ResultSet r = s.executeQuery("SELECT pruiz2.instructor_seq.NEXTVAL FROM DUAL")) {
-                    r.next();
-                    iid = r.getInt(1);
-                }
+                System.out.print("IID: "); int iid = Integer.parseInt(scanner.nextLine());
                 System.out.print("Employee ID: "); int eid = Integer.parseInt(scanner.nextLine());
                 System.out.print("Certification (1/2/3): "); int cert = Integer.parseInt(scanner.nextLine());
-                String sql = "INSERT INTO pruiz2.Instructor (IID, EID, Certification) VALUES (?, ?, ?)";
+                String sql = "INSERT INTO Instructor (IID, EID, Certification) VALUES (?, ?, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, iid);
                     ps.setInt(2, eid);
@@ -939,7 +916,7 @@ import java.util.Scanner;
             } break;
 
             case "2": {  // List all
-                String sql = "SELECT IID, EID, Certification FROM pruiz2.Instructor";
+                String sql = "SELECT IID, EID, Certification FROM Instructor ORDER BY IID ASC";
                 try (Statement st = conn.createStatement();
                      ResultSet rs = st.executeQuery(sql)) {
                     System.out.println("IID | EID | Certification");
@@ -956,7 +933,7 @@ import java.util.Scanner;
                 System.out.print("IID to update: "); int iid = Integer.parseInt(scanner.nextLine());
                 System.out.print("New Employee ID: "); int eid = Integer.parseInt(scanner.nextLine());
                 System.out.print("New Certification (1/2/3): "); int cert = Integer.parseInt(scanner.nextLine());
-                String sql = "UPDATE pruiz2.Instructor SET EID = ?, Certification = ? WHERE IID = ?";
+                String sql = "UPDATE Instructor SET EID = ?, Certification = ? WHERE IID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, eid);
                     ps.setInt(2, cert);
@@ -968,7 +945,7 @@ import java.util.Scanner;
 
             case "4": {  // Delete
                 System.out.print("IID to delete: "); int iid = Integer.parseInt(scanner.nextLine());
-                String sql = "DELETE FROM pruiz2.Instructor WHERE IID = ?";
+                String sql = "DELETE FROM Instructor WHERE IID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, iid);
                     int cnt = ps.executeUpdate();
@@ -978,7 +955,7 @@ import java.util.Scanner;
 
             case "5": {  // By ID
                 System.out.print("IID: "); int iid = Integer.parseInt(scanner.nextLine());
-                String sql = "SELECT * FROM pruiz2.Instructor WHERE IID = ?";
+                String sql = "SELECT * FROM Instructor WHERE IID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, iid);
                     try (ResultSet rs = ps.executeQuery()) {
@@ -1006,6 +983,7 @@ import java.util.Scanner;
     }
 }
 
+
     /*
      * Method employeeMenu()
      *
@@ -1017,7 +995,6 @@ import java.util.Scanner;
      * Returns:
      *      void -- Doesn’t return anything. It handles user actions and updates the database.
      */
-    
     private void employeeMenu() {
         while (true) {
             System.out.println("-- Employee  -- 1)Add 2)List 3)Upd 4)Del 5)ByID 0)Back");
@@ -1026,13 +1003,7 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": { // Add
-                    // Employee
-                    int eid;
-                    try (Statement s = conn.createStatement();
-                        ResultSet r = s.executeQuery("SELECT pruiz2.employee_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        eid = r.getInt(1);
-                    }
+                    System.out.print("EID: "); int eid = Integer.parseInt(scanner.nextLine());
                     System.out.print("Property ID: "); int pid = Integer.parseInt(scanner.nextLine());
                     System.out.print("First Name: "); String fn = scanner.nextLine();
                     System.out.print("Last Name: ");  String ln = scanner.nextLine();
@@ -1043,7 +1014,7 @@ import java.util.Scanner;
                     System.out.print("Start Date (yyyy-mm-dd): "); Date sd = Date.valueOf(scanner.nextLine());
                     System.out.print("Monthly Salary: "); BigDecimal sal = new BigDecimal(scanner.nextLine());
                     String sql =
-                      "INSERT INTO pruiz2.Employee (EID, PID, FirstName, LastName, Position, Education, Gender, Age, StartDate, MonthlySalary) " +
+                      "INSERT INTO Employee (EID, PID, FirstName, LastName, Position, Education, Gender, Age, StartDate, MonthlySalary) " +
                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, eid);
@@ -1063,7 +1034,7 @@ import java.util.Scanner;
                 case "2": { // List
                     String sql =
                       "SELECT EID, PID, FirstName, LastName, Position, Education, Gender, Age, StartDate, MonthlySalary " +
-                      "FROM pruiz2.Employee";
+                      "FROM Employee";
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
                         System.out.println("EID | PID | First | Last | Pos | Edu | Gen | Age | Start | Salary");
@@ -1087,7 +1058,7 @@ import java.util.Scanner;
                     System.out.print("New Position: "); String pos = scanner.nextLine();
                     System.out.print("New Education: "); String edu = scanner.nextLine();
                     String sql = 
-                      "UPDATE pruiz2.Employee SET Position = ?, Education = ? WHERE EID = ?";
+                      "UPDATE Employee SET Position = ?, Education = ? WHERE EID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setString(1, pos);
                         ps.setString(2, edu);
@@ -1098,7 +1069,7 @@ import java.util.Scanner;
                 } break;
                 case "4": { // Delete
                     System.out.print("EID to delete: "); int eid = Integer.parseInt(scanner.nextLine());
-                    String sql = "DELETE FROM pruiz2.Employee WHERE EID = ?";
+                    String sql = "DELETE FROM Employee WHERE EID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, eid);
                         int cnt = ps.executeUpdate();
@@ -1107,7 +1078,7 @@ import java.util.Scanner;
                 } break;
                 case "5": { // By ID
                     System.out.print("EID: "); int eid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * FROM pruiz2.Employee WHERE EID = ?";
+                    String sql = "SELECT * FROM Employee WHERE EID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, eid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -1140,7 +1111,7 @@ import java.util.Scanner;
         }
     }
     
-    /*
+   /*
      * Method trailMenu()
      *
      * This method opens a menu for managing trail records in the database.
@@ -1159,12 +1130,7 @@ import java.util.Scanner;
         try {
             switch (c) {
             case "1": {  // Create
-                 int tid;
-                try (Statement s = conn.createStatement();
-                    ResultSet r = s.executeQuery("SELECT pruiz2.trail_seq.NEXTVAL FROM DUAL")) {
-                    r.next();
-                    tid = r.getInt(1);
-                }
+                System.out.print("TID: "); int tid = Integer.parseInt(scanner.nextLine());
                 System.out.print("Name: "); String name = scanner.nextLine();
                 System.out.print("Start Location: "); String start = scanner.nextLine();
                 System.out.print("End Location: "); String end = scanner.nextLine();
@@ -1172,7 +1138,7 @@ import java.util.Scanner;
                 System.out.print("Difficulty: "); String diff = scanner.nextLine();
                 System.out.print("Category: "); String cat = scanner.nextLine();
                 String sql =
-                  "INSERT INTO pruiz2.Trail (TID, Name, StartLocation, EndLocation, Status, Difficulty, Category) " +
+                  "INSERT INTO Trail (TID, Name, StartLocation, EndLocation, Status, Difficulty, Category) " +
                   "VALUES (?, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, tid);
@@ -1188,7 +1154,7 @@ import java.util.Scanner;
             } break;
 
             case "2": {  // List all
-                String sql = "SELECT TID, Name, StartLocation, EndLocation, Status, Difficulty, Category FROM pruiz2.Trail";
+                String sql = "SELECT TID, Name, StartLocation, EndLocation, Status, Difficulty, Category FROM Trail ORDER BY TID ASC";
                 try (Statement stt = conn.createStatement();
                      ResultSet rs = stt.executeQuery(sql)) {
                     System.out.println("TID | Name | Start | End | Status | Difficulty | Category");
@@ -1210,7 +1176,7 @@ import java.util.Scanner;
             case "3": {  // Update status
                 System.out.print("TID to update: "); int tid = Integer.parseInt(scanner.nextLine());
                 System.out.print("New Status (1=open, 0=closed): "); int st = Integer.parseInt(scanner.nextLine());
-                String sql = "UPDATE pruiz2.Trail SET Status = ? WHERE TID = ?";
+                String sql = "UPDATE Trail SET Status = ? WHERE TID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, st);
                     ps.setInt(2, tid);
@@ -1221,7 +1187,7 @@ import java.util.Scanner;
 
             case "4": {  // Delete
                 System.out.print("TID to delete: "); int tid = Integer.parseInt(scanner.nextLine());
-                String sql = "DELETE FROM pruiz2.Trail WHERE TID = ?";
+                String sql = "DELETE FROM Trail WHERE TID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, tid);
                     int cnt = ps.executeUpdate();
@@ -1231,7 +1197,7 @@ import java.util.Scanner;
 
             case "5": {  // By ID
                 System.out.print("TID: "); int tid = Integer.parseInt(scanner.nextLine());
-                String sql = "SELECT * FROM pruiz2.Trail WHERE TID = ?";
+                String sql = "SELECT * FROM Trail WHERE TID = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, tid);
                     try (ResultSet rs = ps.executeQuery()) {
@@ -1283,12 +1249,8 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": {  // Create
-                     int lid;
-                    try (Statement s = conn.createStatement();
-                        ResultSet r = s.executeQuery("SELECT pruiz2.lift_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        lid = r.getInt(1);
-                    }
+                    System.out.print("LiftID: ");
+                    int lid = Integer.parseInt(scanner.nextLine());
                     System.out.print("Name: ");
                     String name = scanner.nextLine();
                     System.out.print("Open Time (HH24:MI): ");
@@ -1299,7 +1261,7 @@ import java.util.Scanner;
                     int status = Integer.parseInt(scanner.nextLine());
     
                     String sql = 
-                      "INSERT INTO pruiz2.Lift (LiftID, Name, OpenTime, CloseTime, Status) " +
+                      "INSERT INTO Lift (LiftID, Name, OpenTime, CloseTime, Status) " +
                       "VALUES (?, ?, ?, ?, ?)";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, lid);
@@ -1314,7 +1276,7 @@ import java.util.Scanner;
     
                 case "2": {  // List all
                     String sql = 
-                      "SELECT LiftID, Name, OpenTime, CloseTime, Status FROM pruiz2.Lift";
+                      "SELECT LiftID, Name, OpenTime, CloseTime, Status FROM Lift ORDER BY LiftID ASC";
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
                         System.out.println("LiftID | Name | Open  | Close | Status");
@@ -1337,7 +1299,7 @@ import java.util.Scanner;
                     System.out.print("New Status (1=open, 0=closed): ");
                     int status = Integer.parseInt(scanner.nextLine());
     
-                    String sql = "UPDATE pruiz2.Lift SET Status = ? WHERE LiftID = ?";
+                    String sql = "UPDATE Lift SET Status = ? WHERE LiftID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, status);
                         ps.setInt(2, lid);
@@ -1350,7 +1312,7 @@ import java.util.Scanner;
                     System.out.print("LiftID to delete: ");
                     int lid = Integer.parseInt(scanner.nextLine());
     
-                    String sql = "DELETE FROM pruiz2.Lift WHERE LiftID = ?";
+                    String sql = "DELETE FROM Lift WHERE LiftID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, lid);
                         int cnt = ps.executeUpdate();
@@ -1362,7 +1324,7 @@ import java.util.Scanner;
                     System.out.print("LiftID: ");
                     int lid = Integer.parseInt(scanner.nextLine());
     
-                    String sql = "SELECT * FROM pruiz2.Lift WHERE LiftID = ?";
+                    String sql = "SELECT * FROM Lift WHERE LiftID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, lid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -1393,7 +1355,7 @@ import java.util.Scanner;
         }
     }    
     
-    /*
+     /*
      * Method liftUsageMenu()
      *
      * This method opens a menu for managing lift usage records in the database.
@@ -1412,17 +1374,13 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": {  // Record a ride
-                    int uid;
-                    try (Statement s = conn.createStatement();
-                        ResultSet r = s.executeQuery("SELECT pruiz2.liftusage_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        uid = r.getInt(1);
-                    }
+                    System.out.print("UsageID: ");   int uid  = Integer.parseInt(scanner.nextLine());
                     System.out.print("PassID: ");int pid  = Integer.parseInt(scanner.nextLine());
                     System.out.print("LiftID: ");int lid  = Integer.parseInt(scanner.nextLine());
-                    String sql = 
-                      "INSERT INTO pruiz2.LiftUsage (UID, PID, LiftID, DateTimeOfUse) " +
-                      "VALUES (?, ?, ?, CURRENT_TIMESTAMP)";
+                    String sql = """ 
+                    INSERT INTO LiftUsage (UsageID, PID, LiftID, DateTimeOfUse) 
+                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                    """;
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, uid);
                         ps.setInt(2, pid);
@@ -1433,13 +1391,13 @@ import java.util.Scanner;
                 } break;
                 case "2": {  // List all logs
                     String sql = 
-                      "SELECT UID, PID, LiftID, DateTimeOfUse FROM pruiz2.LiftUsage";
+                      "SELECT UsageID, PID, LiftID, DateTimeOfUse FROM LiftUsage ORDER BY UsageID ASC";
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
                         System.out.println("UID | PID | LiftID | DateTime");
                         while (rs.next()) {
                             System.out.printf("%d | %d | %d | %s%n",
-                              rs.getInt("UID"),
+                              rs.getInt("UsageID"),
                               rs.getInt("PID"),
                               rs.getInt("LiftID"),
                               rs.getTimestamp("DateTimeOfUse"));
@@ -1457,7 +1415,8 @@ import java.util.Scanner;
         }
     }    
 
-    /*
+
+     /*
      * Method queryMenu()
      *
      * This method opens a menu which prompts the user to select a query they would like to perform. The
@@ -1469,7 +1428,7 @@ import java.util.Scanner;
      *      void -- Doesn’t return anything. It handles user actions and updates the database.
      */
     private void queryMenu() {
-        while (true) { // Show menu
+        while (true) {
             System.out.println("--- Queries ---");
             System.out.println("1) Member lessons");
             System.out.println("2) Pass history");
@@ -1480,23 +1439,22 @@ import java.util.Scanner;
             String q = scanner.nextLine().trim();
             try {
                 switch (q) {
-                case "1": { // Query 1
+                case "1": {
                     System.out.print("Member ID: ");
                     int mid = Integer.parseInt(scanner.nextLine());
+
                     String sql = """
-                        SELECT m.FirstName, m.LastName,
-                               lo.NumberOfSessions, lo.SessionsLeft,
-                               e.FirstName, e.LastName,
-                               l.TimeOfClass
-                          FROM pruiz2.LessonOrder lo
-                          JOIN pruiz2.Lesson l        ON lo.LID = l.LID
-                          JOIN pruiz2.Instructor i    ON l.IID = i.IID
-                          JOIN pruiz2.Employee e      ON i.EID = e.EID
-                          JOIN pruiz2.Member m        ON lo.MID = m.MID
-                         WHERE m.MID = ?
-                        """;
+                    SELECT m.FirstName, m.LastName, lo.NumberOfSessions, lo.SessionsLeft, e.FirstName, e.LastName, l.TimeOfClass FROM LessonOrder lo 
+				JOIN Lesson l        
+				ON lo.LID = l.LID JOIN Instructor i    
+				ON l.IID = i.IID JOIN Employee e      
+				ON i.EID = e.EID JOIN Member m         
+				ON lo.MID = m.MID WHERE m.MID = ? ORDER BY MID 
+                """;
+
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, mid);
+
                         try (ResultSet rs = ps.executeQuery()) {
                             System.out.println("MemFirst | MemLast | #Purchased | #Left | InstrFirst | InstrLast | TimeOfClass");
                             while (rs.next()) {
@@ -1513,7 +1471,7 @@ import java.util.Scanner;
                     }
                 } break;
     
-                case "2": { // Query 2
+                case "2": {
                     System.out.print("Pass ID: ");
                     int pid = Integer.parseInt(scanner.nextLine());
                     // lift rides
@@ -1553,12 +1511,12 @@ import java.util.Scanner;
                         }
                     }
                 } break;
-
-                case "3": { // Query 3
+    
+                case "3": {
                     String sql = """
                         SELECT t.Name, t.Category, lf.Name
                           FROM pruiz2.Trail t
-                          JOIN pruiz2.Trail lt ON t.TID = lt.TID
+                          JOIN pruiz2.LiftTrail lt ON t.TID = lt.TID
                           JOIN pruiz2.Lift lf      ON lt.LiftID = lf.LiftID
                          WHERE t.Difficulty = 'Intermediate'
                            AND t.Status = 1
@@ -1576,7 +1534,7 @@ import java.util.Scanner;
                     }
                 } break;
     
-                case "4": { // Query 4
+                case "4": {
                     System.out.print("Lesson ID: ");
                     int lid = Integer.parseInt(scanner.nextLine());
                     String sql = """
@@ -1610,7 +1568,7 @@ import java.util.Scanner;
         }
     }    
 
-    /*
+     /*
      * Method propertyMenu()
      *
      * This method opens a menu for managing property records in the database.
@@ -1629,23 +1587,18 @@ import java.util.Scanner;
             try {
                 switch (c) {
                 case "1": {  // Add
-                    int propertyId;
-                    try (Statement s = conn.createStatement();
-                        ResultSet r = s.executeQuery("SELECT pruiz2.property_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        propertyId = r.getInt(1);
-                    }
+                    System.out.print("Property ID: ");    int pid   = Integer.parseInt(scanner.nextLine());
                     System.out.print("Type: ");           String ty  = scanner.nextLine();
                     System.out.print("Name: ");           String nm  = scanner.nextLine();
                     System.out.print("Monthly Income: "); BigDecimal inc = new BigDecimal(scanner.nextLine());
     
                     String sql = """
-                        INSERT INTO pruiz2.Property
+                        INSERT INTO Property
                           (PropertyID, Type, Name, MonthlyIncome)
                         VALUES (?,?,?,?)
                         """;
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setInt(1, propertyId);
+                        ps.setInt(1, pid);
                         ps.setString(2, ty);
                         ps.setString(3, nm);
                         ps.setBigDecimal(4, inc);
@@ -1655,7 +1608,7 @@ import java.util.Scanner;
                 } break;
     
                 case "2": {  // List all
-                    String sql = "SELECT PropertyID, Type, Name, MonthlyIncome FROM pruiz2.Property";
+                    String sql = "SELECT PropertyID, Type, Name, MonthlyIncome FROM Property ORDER BY PropertyID ASC";
                     try (Statement st = conn.createStatement();
                          ResultSet rs = st.executeQuery(sql)) {
                         System.out.println("PID | Type | Name | Income");
@@ -1675,7 +1628,7 @@ import java.util.Scanner;
                     System.out.print("New Monthly Income: ");
                     BigDecimal inc = new BigDecimal(scanner.nextLine());
     
-                    String sql = "UPDATE pruiz2.Property SET MonthlyIncome = ? WHERE PropertyID = ?";
+                    String sql = "UPDATE Property SET MonthlyIncome = ? WHERE PropertyID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setBigDecimal(1, inc);
                         ps.setInt(2, pid);
@@ -1687,7 +1640,7 @@ import java.util.Scanner;
                 case "4": {  // Delete
                     System.out.print("Property ID to delete: ");
                     int pid = Integer.parseInt(scanner.nextLine());
-                    String sql = "DELETE FROM pruiz2.Property WHERE PropertyID = ?";
+                    String sql = "DELETE FROM Property WHERE PropertyID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, pid);
                         int cnt = ps.executeUpdate();
@@ -1698,7 +1651,7 @@ import java.util.Scanner;
                 case "5": {  // By ID
                     System.out.print("Property ID: ");
                     int pid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * FROM pruiz2.Property WHERE PropertyID = ?";
+                    String sql = "SELECT * FROM Property WHERE PropertyID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, pid);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -1727,161 +1680,151 @@ import java.util.Scanner;
                 System.out.println("Error: " + e.getMessage());
             }
         }
-    }    
+    }
 
-    /*
-     * Method lessonMenu()
-     *
-     * This method opens a menu for managing lesson records in the database.
-     * Users can add, view, update, delete, or look up lesson by ID.
-     * 
-     * Parameters:
-     *      None
-     * Returns:
-     *      void -- Doesn’t return anything. It handles user actions and updates the database.
-     */
-    private void lessonMenu() {
-        while (true) {
-            System.out.println("-- Lesson -- 1)Add  2)List  3)Upd  4)Del  5)ByID  0)Back");
-            System.out.print("> ");
-            String c = scanner.nextLine().trim();
-            try {
-                switch (c) {
-                case "1": { // Add
-                    int lid;
-                    try (Statement s = conn.createStatement();
-                         ResultSet r = s.executeQuery("SELECT pruiz2.lesson_seq.NEXTVAL FROM DUAL")) {
-                        r.next();
-                        lid = r.getInt(1);
+/*
+ * Method lesson()
+ *
+ * This method opens a menu for managing lesson records in the database.
+ * Users can add new lessons, update existing ones, delete lessons, 
+ * and view lessons by ID or list all available lessons.
+ *
+ * Parameters:
+ *      None
+ * Returns:
+ *      void -- Doesn't return anything. It handles user actions and updates the database.
+ */
+private void lessonMenu() {
+     while (true) {
+        System.out.println("-- Lesson -- 1)Add 2)List All 3)Update 4)Delete 5)View By ID 0)Back");
+        System.out.print("> ");
+        String c = scanner.nextLine().trim();
+        try {
+            switch (c) {
+            case "1": { // Add new lesson
+                System.out.print("Lesson ID: "); int lid = Integer.parseInt(scanner.nextLine());
+                System.out.print("Type (Private/Group): "); String type = scanner.nextLine();
+                System.out.print("Difficulty (Beginner/Intermediate/Expert): "); String difficulty = scanner.nextLine();
+                System.out.print("Time of Class (YYYY-MM-DD HH:MM:SS): "); String timeOfClass = scanner.nextLine();
+                System.out.print("Duration (minutes): "); int duration = Integer.parseInt(scanner.nextLine());
+                System.out.print("Price: "); double price = Double.parseDouble(scanner.nextLine());
+                System.out.print("Instructor ID: "); int iid = Integer.parseInt(scanner.nextLine());
+                
+                String sql = 
+                  "INSERT INTO pruiz2.Lesson (LID, Type, Difficulty, TimeOfClass, Duration, Price, IID) " +
+                  "VALUES (?, ?, ?, TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS'), ?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setInt(1, lid);
+                    ps.setString(2, type);
+                    ps.setString(3, difficulty);
+                    ps.setString(4, timeOfClass);
+                    ps.setInt(5, duration);
+                    ps.setDouble(6, price);
+                    ps.setInt(7, iid);
+                    ps.executeUpdate();
+                }
+                System.out.println("Lesson added successfully.");
+            } break;
+            case "2": { // List all lessons
+                String sql = 
+                  "SELECT l.LID, l.Type, l.Difficulty, l.TimeOfClass, l.Duration, l.Price, " +
+                  "l.IID, i.Certification " +
+                  "FROM pruiz2.Lesson l " +
+                  "LEFT JOIN pruiz2.Instructor i ON l.IID = i.IID " +
+                  "ORDER BY l.TimeOfClass";
+                try (Statement st = conn.createStatement();
+                     ResultSet rs = st.executeQuery(sql)) {
+                    System.out.println("LID | Type | Difficulty | Time | Duration | Price | IID | Certification");
+                    System.out.println("------------------------------------------------------------------");
+                    while (rs.next()) {
+                        System.out.printf("%d | %s | %s | %s | %d mins | $%.2f | %d | %s%n",
+                          rs.getInt("LID"),
+                          rs.getString("Type"),
+                          rs.getString("Difficulty"),
+                          rs.getTimestamp("TimeOfClass"),
+                          rs.getInt("Duration"),
+                          rs.getDouble("Price"),
+                          rs.getInt("IID"),
+                          rs.getInt("Certification"));
                     }
-                    System.out.print("Type (Private/Group): ");
-                    String type = scanner.nextLine();
-                    System.out.print("Difficulty: ");
-                    String diff = scanner.nextLine();
-                    System.out.print("TimeOfClass (HH24:MI): ");
-                    String toc  = scanner.nextLine();
-                    System.out.print("Duration: ");
-                    String dur  = scanner.nextLine();
-                    System.out.print("Price: ");
-                    BigDecimal price = new BigDecimal(scanner.nextLine());
-                    System.out.print("Instructor ID: ");
-                    int iid = Integer.parseInt(scanner.nextLine());
-    
-                    String sql = """
-                        INSERT INTO Lesson
-                          (LID, Type, Difficulty, TimeOfClass, Duration, Price, IID)
-                        VALUES (?,?,?,?,?,?,?)
-                        """;
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setInt(1, lid);
-                        ps.setString(2, type);
-                        ps.setString(3, diff);
-                        ps.setString(4, toc);
-                        ps.setString(5, dur);
-                        ps.setBigDecimal(6, price);
-                        ps.setInt(7, iid);
-                        ps.executeUpdate();
+                }
+            } break;
+            case "3": { // Update lesson
+                System.out.print("Lesson ID to update: "); int lid = Integer.parseInt(scanner.nextLine());
+                System.out.print("New Type: "); String type = scanner.nextLine();
+                System.out.print("New Difficulty: "); String difficulty = scanner.nextLine();
+                System.out.print("New Duration: "); int duration = Integer.parseInt(scanner.nextLine());
+                System.out.print("New Price: "); double price = Double.parseDouble(scanner.nextLine());
+                
+                String sql = "UPDATE pruiz2.Lesson SET Type = ?, Difficulty = ?, " +
+                             "Duration = ?, Price = ? WHERE LID = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, type);
+                    ps.setString(2, difficulty);
+                    ps.setInt(3, duration);
+                    ps.setDouble(4, price);
+                    ps.setInt(5, lid);
+                    int rowsUpdated = ps.executeUpdate();
+                    if (rowsUpdated > 0) {
+                        System.out.println("Lesson updated successfully.");
+                    } else {
+                        System.out.println("No lesson found with that ID.");
                     }
-                    System.out.println("Lesson added.");
-                } break;
-    
-                case "2": { // List all
-                    String sql = "SELECT LID, Type, Difficulty, TimeOfClass, Duration, Price, IID FROM pruiz2.Lesson";
-                    try (Statement st = conn.createStatement();
-                         ResultSet rs = st.executeQuery(sql)) {
-                        System.out.println("LID | Type | Diff | Time | Duration | Price | IID");
-                        while (rs.next()) {
-                            System.out.printf("%d | %s | %s | %s | %s | %s | %d%n",
+                }
+            } break;
+            case "4": { // Delete lesson
+                System.out.print("Lesson ID to delete: "); int lid = Integer.parseInt(scanner.nextLine());
+                
+                // Check if any lesson orders reference this lesson
+                String checkOrdersSql = "SELECT COUNT(*) FROM pruiz2.LessonOrder WHERE LID = ?";
+                try (PreparedStatement ps = conn.prepareStatement(checkOrdersSql)) {
+                    ps.setInt(1, lid);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next() && rs.getInt(1) > 0) {
+                            System.out.println("Cannot delete lesson - it has associated orders. Delete the orders first.");
+                            break;
+                        }
+                    }
+                }
+                
+                String sql = "DELETE FROM pruiz2.Lesson WHERE LID = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setInt(1, lid);
+                    int cnt = ps.executeUpdate();
+                    System.out.println(cnt > 0 ? "Lesson deleted." : "No lesson found with that ID.");
+                }
+            } break;
+            case "5": { // View by ID
+                System.out.print("Lesson ID: "); int lid = Integer.parseInt(scanner.nextLine());
+                String sql = "SELECT * FROM pruiz2.Lesson WHERE LID = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setInt(1, lid);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            System.out.printf("%d | %s | %s | %s | %d | %.2f | %d%n",
                               rs.getInt("LID"),
                               rs.getString("Type"),
                               rs.getString("Difficulty"),
-                              rs.getString("TimeOfClass"),
-                              rs.getString("Duration"),
-                              rs.getBigDecimal("Price"),
+                              rs.getTimestamp("TimeOfClass"),
+                              rs.getInt("Duration"),
+                              rs.getDouble("Price"),
                               rs.getInt("IID"));
+                        } else {
+                            System.out.println("No lesson found with that ID.");
                         }
                     }
-                } break;
-    
-                case "3": { // Update
-                    System.out.print("LID to update: ");
-                    int lid = Integer.parseInt(scanner.nextLine());
-                    System.out.print("New Type: ");
-                    String type = scanner.nextLine();
-                    System.out.print("New Difficulty: ");
-                    String diff = scanner.nextLine();
-                    System.out.print("New TimeOfClass (HH24:MI): ");
-                    String toc  = scanner.nextLine();
-                    System.out.print("New Duration: ");
-                    String dur  = scanner.nextLine();
-                    System.out.print("New Price: ");
-                    BigDecimal price = new BigDecimal(scanner.nextLine());
-                    System.out.print("New Instructor ID: ");
-                    int iid = Integer.parseInt(scanner.nextLine());
-    
-                    String sql = """
-                        UPDATE Lesson
-                           SET Type=?, Difficulty=?, TimeOfClass=?, Duration=?, Price=?, IID=?
-                         WHERE LID=?
-                        """;
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setString(1, type);
-                        ps.setString(2, diff);
-                        ps.setString(3, toc);
-                        ps.setString(4, dur);
-                        ps.setBigDecimal(5, price);
-                        ps.setInt(6, iid);
-                        ps.setInt(7, lid);
-                        int cnt = ps.executeUpdate();
-                        System.out.println(cnt>0 ? "Lesson updated." : "No such LID.");
-                    }
-                } break;
-    
-                case "4": { // Delete
-                    System.out.print("LID to delete: ");
-                    int lid = Integer.parseInt(scanner.nextLine());
-                    String sql = "DELETE FROM pruiz2.Lesson WHERE LID = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setInt(1, lid);
-                        int cnt = ps.executeUpdate();
-                        System.out.println(cnt>0 ? "Lesson deleted." : "No such LID.");
-                    }
-                } break;
-    
-                case "5": { // By ID
-                    System.out.print("LID: ");
-                    int lid = Integer.parseInt(scanner.nextLine());
-                    String sql = "SELECT * pruiz2.Lesson WHERE LID = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setInt(1, lid);
-                        try (ResultSet rs = ps.executeQuery()) {
-                            if (rs.next()) {
-                                System.out.printf(
-                                  "%d | %s | %s | %s | %s | %s | %d%n",
-                                  rs.getInt("LID"),
-                                  rs.getString("Type"),
-                                  rs.getString("Difficulty"),
-                                  rs.getString("TimeOfClass"),
-                                  rs.getString("Duration"),
-                                  rs.getBigDecimal("Price"),
-                                  rs.getInt("IID")
-                                );
-                            } else {
-                                System.out.println("No lesson found.");
-                            }
-                        }
-                    }
-                } break;
-    
-                case "0":
-                    return;
-    
-                default:
-                    System.out.println("Invalid choice.");
                 }
-            } catch (SQLException e) {
-                System.out.println("Error: " + e.getMessage());
+            } break;
+            case "0":
+                return;
+            default:
+                System.out.println("Invalid choice.");
             }
+        } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number entered. Please try again.");
         }
     }
+}   
 }
