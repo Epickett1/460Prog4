@@ -475,7 +475,7 @@ public class menu {
                                 Timestamp exp = rs.getTimestamp("ExpirationDate");
                                 if (rem == 0 && exp.before(Timestamp.from(Instant.now()))) {
                                     // safe to delete
-                                    try (PreparedStatement del = conn.prepareStatement("DELETE FROM SkiPass WHERE PID = ?")) {
+                                    try (PreparedStatement del = conn.prepareStatement("UPDATE pruiz2.SkiPass SET IsValid = 0 WHERE PID =?")) {
                                     del.setInt(1, pid);
                                     del.executeUpdate();
                                     System.out.println("SkiPass deleted.");
@@ -613,7 +613,7 @@ public class menu {
                 }
                 case "4": { // Delete
                     System.out.print("EID to delete: "); int eid = Integer.parseInt(scanner.nextLine());
-                    String sql = "DELETE FROM pruiz2.Equipment WHERE EID=?";
+                    String sql = "UPDATE pruiz2.Equipment SET IsArchived = 1 WHERE EID = ?;";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, eid);
                         int cnt = ps.executeUpdate();
