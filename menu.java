@@ -1444,13 +1444,21 @@ public class menu {
                     int mid = Integer.parseInt(scanner.nextLine());
 
                     String sql = """
-                    SELECT m.FirstName, m.LastName, lo.NumberOfSessions, lo.SessionsLeft, e.FirstName, e.LastName, l.TimeOfClass FROM LessonOrder lo 
-				JOIN Lesson l        
-				ON lo.LID = l.LID JOIN Instructor i    
-				ON l.IID = i.IID JOIN Employee e      
-				ON i.EID = e.EID JOIN Member m         
-				ON lo.MID = m.MID WHERE m.MID = ? ORDER BY MID 
-                """;
+                    SELECT 
+                        m.FirstName AS MemFirst,
+                        m.LastName AS MemLast,
+                        lo.NumberOfSessions,
+                        lo.SessionsLeft,
+                        e.FirstName AS InstrFirst,
+                        e.LastName AS InstrLast,
+                        l.TimeOfClass
+                    FROM pruiz2.LessonOrder lo 
+                    JOIN pruiz2.Lesson l ON lo.LID = l.LID 
+                    JOIN pruiz2.Instructor i ON l.IID = i.IID 
+                    JOIN pruiz2.Employee e ON i.EID = e.EID 
+                    JOIN pruiz2.Member m ON lo.MID = m.MID 
+                    WHERE m.MID = ? 
+                    ORDER BY lo.OID""";
 
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, mid);
