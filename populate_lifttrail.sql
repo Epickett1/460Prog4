@@ -1,0 +1,19 @@
+INSERT INTO LiftTrail (TID, LiftID)
+VALUES (1, 1);
+
+INSERT INTO LiftTrail (TID, LiftID)
+VALUES (2, 1);
+
+INSERT INTO LiftTrail (TID, LiftID)
+VALUES (3, 2);
+
+INSERT INTO LiftTrail (TID, LiftID)
+VALUES (3, 3);
+
+INSERT INTO LiftTrail (TID, LiftID)
+VALUES (4, 4);
+
+INSERT INTO LiftTrail (TID, LiftID)
+VALUES (5, 5);
+
+COMMIT;

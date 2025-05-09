@@ -1,4 +1,3 @@
-
 -- ChangeLog
 INSERT INTO ChangeLog (ChangeID, Description) VALUES (1, '1');
 INSERT INTO ChangeLog (ChangeID, Description) VALUES (2, '1');
@@ -150,3 +149,4 @@ VALUES (5, 5, 5, TO_TIMESTAMP('2025-05-01 10:00:00', 'YYYY-MM-DD HH24:MI:SS'));
 
 -- Final commit
 COMMIT;
+
