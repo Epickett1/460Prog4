@@ -552,7 +552,7 @@ public class menu {
 
                     // Insert the changelog entry first
                     String sqlChangeLog = 
-                    "INSERT INTO pruiz2.ChangeLog (ChangeID, Description) VALUES (?, 1)";
+                    "INSERT INTO pruiz2.ChangeLog (ChangeID, Description) VALUES (?, '1')";
                     try (PreparedStatement psChange = conn.prepareStatement(sqlChangeLog)) {
                     psChange.setInt(1, changeid);
                     psChange.executeUpdate();
@@ -561,7 +561,7 @@ public class menu {
                     // Now insert equipment with the CID
                 String sqlEquipment = 
                 "INSERT INTO pruiz2.Equipment (EID, Type, Status, SizeOrLength, IsArchived, ChangeID) " +
-                "VALUES (?, ?, TRUE, ?, FALSE, ?)";
+                "VALUES (?, ?, 1, ?, 0, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(sqlEquipment)) {
                     ps.setInt(1, eid);
                     ps.setInt(2, type);
