@@ -206,11 +206,13 @@ ALTER TABLE SkiPass
 
 ALTER TABLE Equipment
   ADD CONSTRAINT chk_equip_size
-     CHECK (
-       (Type = 1 AND SizeOrLength BETWEEN 4 AND 14) OR
-       (Type = 2 AND SizeOrLength BETWEEN 100 AND 140) OR
-       …
-     );
+    CHECK (
+      (Type = 1 AND SizeOrLength BETWEEN 4 AND 14) OR
+      (Type = 2 AND SizeOrLength BETWEEN 100 AND 140) OR
+      (Type = 3 AND SizeOrLength BETWEEN 90 AND 178) OR
+      (Type = 4 AND SizeOrLength BETWEEN 115 AND 200)
+    );
+
 
 CREATE OR REPLACE TRIGGER trg_liftusage_after
   AFTER INSERT ON LiftUsage
